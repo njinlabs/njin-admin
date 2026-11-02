@@ -1,5 +1,4 @@
 import z from "zod";
-import { toRawId } from "./raw-id";
 
 export type Form = {
   key: string;
@@ -26,6 +25,17 @@ export type Form = {
   unique?: boolean;
 };
 
+// `z.fromJSONSchema` reads `anyOf: [X, { type: "null" }]`, which is how a nullable field is written,
+// as a union rather than a ZodNullable. This is the X of such a union, if the type is one.
+const nullableInner = (value: z.ZodType): z.ZodType | undefined => {
+  if (!(value instanceof z.ZodUnion)) return undefined;
+
+  const options = value.options as z.ZodType[];
+  const rest = options.filter((option) => !(option instanceof z.ZodNull));
+
+  return options.length === 2 && rest.length === 1 ? rest[0] : undefined;
+};
+
 const unwrap = (value: z.ZodType) => {
   let currentType = value;
   let isOptional = false;
@@ -33,13 +43,17 @@ const unwrap = (value: z.ZodType) => {
 
   while (
     currentType instanceof z.ZodOptional ||
-    currentType instanceof z.ZodNullable
+    currentType instanceof z.ZodNullable ||
+    nullableInner(currentType)
   ) {
     if (currentType instanceof z.ZodOptional) {
       currentType = currentType.unwrap() as z.ZodType;
       isOptional = true;
     } else if (currentType instanceof z.ZodNullable) {
       currentType = currentType.unwrap() as z.ZodType;
+      isNullable = true;
+    } else {
+      currentType = nullableInner(currentType) as z.ZodType;
       isNullable = true;
     }
   }
@@ -58,18 +72,16 @@ const unwrap = (value: z.ZodType) => {
 };
 
 const extractId = (val: unknown): unknown => {
-  // Backend ids come formatted as `table:id` (e.g. "file:xyz789") — only the
-  // raw id part is accepted back on write endpoints (relation/file FKs).
+  // Ids are plain strings (a UUID, or what the adapter makes). A picked record comes back as
+  // an object with an id, and a link is written as just that id.
   if (
     val &&
     typeof val === "object" &&
     "id" in (val as Record<string, unknown>) &&
     (val as Record<string, unknown>).id != null
   ) {
-    return toRawId(String((val as Record<string, unknown>).id));
+    return String((val as Record<string, unknown>).id);
   }
-
-  if (typeof val === "string") return toRawId(val);
 
   return val;
 };
@@ -109,6 +121,10 @@ const rewrap = (
 // them (e.g. an array-of-objects member, per `ArrayForm`) also get their ids extracted
 // before submit — `transformSchema`'s own loop only walks the top-level shape. Each
 // field's own meta (label/renderAs) is re-attached since rebuilding the schema drops it.
+// What an array was told about its length (.min(), .max()). A rebuilt array starts without it,
+// so it is carried over, or the rebuilt one would accept what the server refuses.
+const checksOf = (schema: z.ZodType) => (schema as any)._zod.def.checks ?? [];
+
 const transformType = (type: z.ZodType): z.ZodType => {
   const { type: inner, withMeta, isOptional, isNullable } = unwrap(type);
   const meta = (withMeta as any).meta?.();
@@ -122,9 +138,8 @@ const transformType = (type: z.ZodType): z.ZodType => {
 
   if (inner instanceof z.ZodArray) {
     const elementTransformed = transformType(inner.element as z.ZodType);
-    const arrayTransformed = meta
-      ? z.array(elementTransformed).meta(meta)
-      : z.array(elementTransformed);
+    const rebuilt = z.array(elementTransformed).check(...checksOf(inner));
+    const arrayTransformed = meta ? rebuilt.meta(meta) : rebuilt;
     return rewrap(arrayTransformed, withMeta, isNullable, isOptional);
   }
 
@@ -137,7 +152,12 @@ export const transformSchema = (
   const newShape: { [x: string]: z.ZodType } = {};
 
   for (const [key, value] of Object.entries(existingSchema.shape)) {
-    const { withMeta, isOptional, isNullable } = unwrap(value as z.ZodType);
+    const {
+      type: original,
+      withMeta,
+      isOptional,
+      isNullable,
+    } = unwrap(value as z.ZodType);
 
     const meta = (withMeta as any).meta?.();
 
@@ -164,7 +184,7 @@ export const transformSchema = (
       const finalField: z.ZodType = z
         .preprocess(
           (val) => (Array.isArray(val) ? val.map(extractId) : val),
-          z.array(z.string()),
+          z.array(z.string()).check(...checksOf(original)),
         )
         .meta(meta);
 

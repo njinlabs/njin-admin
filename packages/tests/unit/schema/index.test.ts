@@ -4,18 +4,12 @@ import { getSchema, schemaQuery } from "../../../src/sdk/schema";
 import post from "../../fixtures/post-schema.json";
 import { capture } from "../api/capture";
 
-// post-schema.json has one nullable field, which the old file cannot read yet.
-const { note: _note, ...properties } = post.properties;
 const entry = {
   name: "Post",
   prefix: "post",
   draftable: false,
   i18n: true,
-  schema: {
-    ...post,
-    properties,
-    required: post.required.filter((key) => key !== "note"),
-  },
+  schema: post,
 };
 
 test("getSchema reads /api/schema and makes a zod schema and a form for each entry", async () => {
@@ -49,6 +43,7 @@ test("the schema it returns is the one that reduces a relation to its id", async
     when: "2026-01-01T00:00:00.000Z",
     status: "a",
     views: 1,
+    note: null,
     cover: "f1",
     gallery: [],
     tags: [],

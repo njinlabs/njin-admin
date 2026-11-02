@@ -10,14 +10,6 @@ import rules from "../../fixtures/rules-schema.json";
 
 // The pipeline of the old admin, as app-sidebar.tsx ran it for each model: the server's JSON
 // schema becomes the one zod schema, and the form and the defaults are read from that.
-// The old file cannot read a nullable field yet, so the one nullable field of the fixture is left out.
-const { note: _note, ...properties } = post.properties;
-const withoutNullable = {
-  ...post,
-  properties,
-  required: post.required.filter((key) => key !== "note"),
-};
-
 const build = (json: object) => {
   const schema = transformSchema(
     z.fromJSONSchema(json as never) as z.ZodObject,
@@ -26,10 +18,10 @@ const build = (json: object) => {
 };
 
 describe("the zod schema made from the server's JSON schema", () => {
-  const { schema, form } = build(withoutNullable);
+  const { schema, form } = build(post);
 
   test("lists the fields in the order the server sent them", () => {
-    expect(form.map((f) => f.key)).toEqual(Object.keys(properties));
+    expect(form.map((f) => f.key)).toEqual(Object.keys(post.properties));
   });
 
   test("carries label, type, unique, options and the related model", () => {
@@ -65,6 +57,7 @@ describe("the zod schema made from the server's JSON schema", () => {
       when: "2026-01-01T00:00:00.000Z",
       status: "a",
       views: 1,
+      note: null,
       cover: "f1",
       gallery: [],
       tags: [],
@@ -111,5 +104,158 @@ describe("the same schema enforces what the backend enforces", () => {
     expect(fails({ score: 0 })).toBe(true);
     expect(fails({ score: 10 })).toBe(true);
     expect(fails({ kind: "zzz" })).toBe(true);
+  });
+});
+
+describe("a nullable field", () => {
+  const { schema, form } = build(post);
+  const note = form.find((f) => f.key === "note");
+
+  test("is read for its label and type, not lost as a union with no meta", () => {
+    expect(note).toMatchObject({ type: "text", label: "Note" });
+  });
+
+  test("still takes null, and still refuses the wrong type", () => {
+    const only = z.object({ note: schema.shape.note });
+
+    expect(only.safeParse({ note: null }).success).toBe(true);
+    expect(only.safeParse({ note: "text" }).success).toBe(true);
+    expect(only.safeParse({ note: 5 }).success).toBe(false);
+  });
+
+  test("works for a link, an object and a list too", () => {
+    const nullable = (node: object) => ({
+      type: "object",
+      properties: { f: { anyOf: [node, { type: "null" }] } },
+      required: ["f"],
+    });
+    const nodes = {
+      relation: {
+        label: "R",
+        renderAs: "relation",
+        model: "tag",
+        type: "object",
+        properties: { id: { type: "string" } },
+        required: ["id"],
+      },
+      object: {
+        label: "O",
+        renderAs: "object",
+        type: "object",
+        properties: { a: { label: "A", renderAs: "text", type: "string" } },
+        required: ["a"],
+      },
+      array: {
+        label: "L",
+        renderAs: "array",
+        type: "array",
+        items: { label: "I", renderAs: "text", type: "string" },
+      },
+    };
+
+    for (const [renderAs, node] of Object.entries(nodes)) {
+      const built = build(nullable(node));
+
+      expect(built.form[0]).toMatchObject({ key: "f", type: renderAs });
+      expect(built.schema.safeParse({ f: null }).success).toBe(true);
+    }
+  });
+});
+
+describe("the number of items in a list", () => {
+  const { schema } = build(rules);
+  const valid = {
+    title: "Hello",
+    code: "ABC",
+    contact: "a@b.co",
+    age: 30,
+    score: 5,
+    links: ["x"],
+    tags: ["t1"],
+    kind: "a",
+  };
+  const fails = (patch: object) =>
+    !schema.safeParse({ ...valid, ...patch }).success;
+
+  test("is enforced on a list, as the server enforces it", () => {
+    expect(fails({ links: [] })).toBe(true);
+    expect(fails({ links: ["a", "b", "c", "d"] })).toBe(true);
+    expect(schema.safeParse({ ...valid, links: ["a", "b", "c"] }).success).toBe(
+      true,
+    );
+  });
+
+  test("is enforced on a list of links too", () => {
+    expect(fails({ tags: [] })).toBe(true);
+    expect(
+      schema.safeParse({ ...valid, tags: [{ id: "a" }, "b"] }).success,
+    ).toBe(true);
+  });
+
+  test("is enforced on a list inside an object", () => {
+    const nested = build({
+      type: "object",
+      properties: {
+        seo: {
+          label: "SEO",
+          renderAs: "object",
+          type: "object",
+          properties: {
+            tags: {
+              label: "T",
+              renderAs: "array",
+              type: "array",
+              minItems: 1,
+              items: { label: "I", renderAs: "text", type: "string" },
+            },
+          },
+          required: ["tags"],
+        },
+      },
+      required: ["seo"],
+    });
+
+    expect(nested.schema.safeParse({ seo: { tags: [] } }).success).toBe(false);
+    expect(nested.schema.safeParse({ seo: { tags: ["a"] } }).success).toBe(
+      true,
+    );
+  });
+});
+
+describe("the id of a link", () => {
+  const { schema } = build({
+    type: "object",
+    properties: {
+      tag: {
+        label: "Tag",
+        renderAs: "relation",
+        model: "tag",
+        type: "object",
+        properties: { id: { type: "string" } },
+        required: ["id"],
+      },
+      tags: {
+        label: "Tags",
+        renderAs: "multi_relation",
+        model: "tag",
+        type: "array",
+        items: { type: "string" },
+      },
+    },
+    required: ["tag", "tags"],
+  });
+
+  test("is kept exactly as the server sent it, a colon included", () => {
+    const parsed = schema.parse({
+      tag: { id: "0192:a-b:c" },
+      tags: ["x:1", { id: "y:2" }],
+    });
+
+    expect(parsed.tag).toBe("0192:a-b:c");
+    expect(parsed.tags).toEqual(["x:1", "y:2"]);
+  });
+
+  test("is a string even when the record holds it as a number", () => {
+    expect(schema.parse({ tag: { id: 7 }, tags: [] }).tag).toBe("7");
   });
 });

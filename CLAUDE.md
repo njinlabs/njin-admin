@@ -77,8 +77,19 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
   `toAdminSchema`, kept as the parser's test data.
 - Query keys nest by model so one `invalidateQueries({ queryKey: ["model", prefix] })` covers lists and records.
 
+## The schema
+
+`packages/src/sdk/schema/schema.ts` is the old admin's `lib/schema.ts` (its owner's core code), checked by Biome like the
+rest. The server's JSON schema becomes **one zod schema** (`z.fromJSONSchema`, then `transformSchema`), and the form, the
+defaults and the validation all come from that one schema, 1:1 with the backend. Never add a second representation (a
+field list, a hand-written validator) next to it. Fixing it is fine, but keep the change small, explain it, and test it
+against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAdminSchema` in njin core).
+
 ## Do not
 
+- Replace or drop a mechanism the old admin used (JSON schema to form and validation, the data table, richtext) without
+  asking first: say what the old way was, what you would do instead, and what is lost. Keep a single schema as the
+  source: fields, defaults and validation all derive from the server's JSON schema, never a second representation.
 - Touch auth or OAuth. A colleague is rewriting it in njin core and it is not pushed yet. The admin has no login,
   token or session code on purpose; `/api/schema` is refused (401) in dev until it lands.
 - Change njin core from here without being asked. Core changes (the manifest endpoint, serving plugin files,
