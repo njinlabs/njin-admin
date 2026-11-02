@@ -4,6 +4,7 @@ export * from "./analytics";
 export * from "./auth";
 export * from "./file";
 export * from "./model";
+export * from "./permissions";
 export * from "./setup";
 export * from "./vars";
 

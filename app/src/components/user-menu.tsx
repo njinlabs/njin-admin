@@ -30,6 +30,7 @@ export const UserMenu = ({ user }: { user: Row }) => {
       // What was loaded belongs to this session. Without the cookie, `Protected` sends the page to
       // the login (through the router, no reload) and drops the header.
       queryClient.removeQueries({ queryKey: ["schema"] });
+      queryClient.removeQueries({ queryKey: ["permissions"] });
       queryClient.removeQueries({ queryKey: ["model"] });
       removeCookie("token", { path: "/" });
     },

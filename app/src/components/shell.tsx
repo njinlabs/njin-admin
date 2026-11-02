@@ -5,8 +5,9 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { PiList, PiX } from "react-icons/pi";
 import { client } from "../lib/client";
-import { navs, schemaNavs } from "../lib/registry";
+import { mainNavs, navs, schemaNavs } from "../lib/registry";
 import { HeaderSlot } from "./header-slot";
+import { useSession } from "./session";
 import { UserMenu } from "./user-menu";
 
 type Section = {
@@ -104,14 +105,18 @@ export const Shell = ({ user }: { user: Row }) => {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const schema = useQuery(schemaQuery(client));
-  const { models, vars } = schemaNavs(schema.data ?? { models: [], vars: [] });
+  const { permissions } = useSession();
+  const { models, vars } = schemaNavs(
+    schema.data ?? { models: [], vars: [] },
+    permissions,
+  );
   const status = schema.isPending
     ? "pending"
     : schema.isError
       ? "error"
       : undefined;
   const sections: Section[] = [
-    { title: null, entries: navs.main },
+    { title: null, entries: mainNavs(permissions) },
     { title: "Content", entries: models, status },
     // One failure message is enough, so Settings stays hidden until the schema is back.
     {

@@ -1,9 +1,11 @@
-import { checkToken } from "@njinlabs/njin-admin/sdk";
+import { checkToken, permissionsQuery } from "@njinlabs/njin-admin/sdk";
+import { Button } from "@njinlabs/njin-admin/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { client } from "../lib/client";
+import { SessionContext } from "./session";
 import { Shell } from "./shell";
 
 // The pages behind the login. The token is checked with the server before anything is shown; a
@@ -22,6 +24,13 @@ export const Protected = () => {
     retry: false,
   });
 
+  // What the user may do shapes every page, so none is shown before it is known. It follows the
+  // token: a refused token (above) has already sent the page to the login.
+  const permissions = useQuery({
+    ...permissionsQuery(client),
+    enabled: !!user,
+  });
+
   useEffect(() => {
     if (token && !isError) return;
 
@@ -31,6 +40,23 @@ export const Protected = () => {
 
   if (!token) return <Navigate to="/login" />;
   if (!user) return null;
+  if (permissions.isError) {
+    return (
+      <div className="grid min-h-screen place-items-center p-6">
+        <div className="flex flex-col items-start gap-3 text-sm text-muted-foreground">
+          <p>Your access could not be loaded.</p>
+          <Button variant="outline" onClick={() => permissions.refetch()}>
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  if (!permissions.data) return null;
 
-  return <Shell user={user} />;
+  return (
+    <SessionContext value={{ user, permissions: permissions.data }}>
+      <Shell user={user} />
+    </SessionContext>
+  );
 };

@@ -1,10 +1,11 @@
 import type {
   AdminPluginConfig,
   NavEntry,
+  Permissions,
   PluginRoute,
   Schema,
 } from "@njinlabs/njin-admin/sdk";
-import { getManifest } from "@njinlabs/njin-admin/sdk";
+import { can, canList, getManifest } from "@njinlabs/njin-admin/sdk";
 import {
   PiFolderOpenDuotone,
   PiGearDuotone,
@@ -87,19 +88,35 @@ export const loadPlugins = async () => {
   }
 };
 
-// Models and settings groups come from the server, so the menu follows what njin has registered.
-export const schemaNavs = ({
-  models,
-  vars,
-}: Pick<Schema, "models" | "vars">) => ({
-  models: models.map((model) => ({
-    icon: () => <PiStackDuotone />,
-    label: model.name,
-    to: `/content/${model.prefix}`,
-  })) as NavEntry[],
-  vars: vars.map((group) => ({
-    icon: () => <PiGearDuotone />,
-    label: group.name,
-    to: `/settings/${group.prefix}`,
-  })) as NavEntry[],
+// Models and settings groups come from the server, so the menu follows what njin has registered
+// and what the user may do with it. The schema already leaves out what they can do nothing with;
+// this also drops a model they could only pick from a relation or only write to, since the page of
+// a model is its list.
+
+// The admin's own entries; Files and Users need their resource, the dashboard is for everyone.
+const guarded: Record<string, string> = { "/files": "file", "/users": "user" };
+
+export const mainNavs = (permissions: Permissions) =>
+  navs.main.filter(
+    ({ to }) => !guarded[to] || canList(permissions, guarded[to]),
+  );
+
+export const schemaNavs = (
+  { models, vars }: Pick<Schema, "models" | "vars">,
+  permissions: Permissions,
+) => ({
+  models: models
+    .filter((model) => canList(permissions, model.prefix))
+    .map((model) => ({
+      icon: () => <PiStackDuotone />,
+      label: model.name,
+      to: `/content/${model.prefix}`,
+    })) as NavEntry[],
+  vars: vars
+    .filter((group) => can(permissions, `vars.${group.prefix}`, "read"))
+    .map((group) => ({
+      icon: () => <PiGearDuotone />,
+      label: group.name,
+      to: `/settings/${group.prefix}`,
+    })) as NavEntry[],
 });

@@ -120,8 +120,13 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
       sama seperti localStorage.
 - [ ] Plugin dimuat sebelum login. Bila `GET /api/admin/manifest` nanti butuh token, plugin tidak termuat setelah login
       lewat router; cari cara memuatnya setelah sesi diperiksa.
-- [ ] Provider sesi tipis; `can(model, action)` dari scope OAuth per model.
-- [ ] Menu dan tombol mengikuti izin.
+- [x] Izin: `GET /api/auth/permissions` (sudah dihitung server: wildcard, scope own/all, scope token, level `ref`) dimuat
+      `Protected` bersama user sebelum halaman mana pun tampil, lalu dibaca lewat `useSession()`. `can`, `canList` dan
+      `canOn` (untuk satu baris, baris sendiri pada level `own`) ada di `sdk/api/permissions.ts`.
+- [ ] Menu dan tombol mengikuti izin: sudah di menu (Content, Settings, Files, Users) dan daftar konten (New, Edit, Hapus,
+      empty state). Tinggal form, publish, halaman Settings/Files/Users dan akses langsung lewat URL di tiap halaman baru.
+- [ ] Layar access group (grant per resource dari `GET /api/access/catalog`) dan hook izin untuk plugin (sdk hanya
+      punya fungsi murni; `useSession` ada di admin dan belum dibagi).
 
 ## 6. Integrasi di core njin
 

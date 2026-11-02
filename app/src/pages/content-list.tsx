@@ -1,4 +1,7 @@
 import {
+  can,
+  canList,
+  canOn,
   destroyRecordMutation,
   type ModelSchema,
   type Row,
@@ -35,6 +38,7 @@ import {
 } from "react-icons/pi";
 import { DataTable } from "../components/data-table";
 import { HeaderActions } from "../components/header-slot";
+import { useSession } from "../components/session";
 import { isListable, renderCell } from "../lib/cell";
 import { client } from "../lib/client";
 import { useDebounced } from "../lib/use-debounced";
@@ -59,7 +63,7 @@ const Empty = ({
   icon: ReactNode;
   title: string;
   description: string;
-  children: ReactNode;
+  children?: ReactNode;
 }) => (
   <>
     <div className="grid size-20 place-items-center rounded-full bg-subtle text-muted-foreground [&>svg]:size-10">
@@ -75,10 +79,15 @@ const Empty = ({
 
 const ModelList = ({ model }: { model: ModelSchema }) => {
   const queryClient = useQueryClient();
+  const { user, permissions } = useSession();
   const [searchText, setSearchText] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [deleting, setDeleting] = useState<Row | null>(null);
 
+  const mayCreate = !!can(permissions, model.prefix, "create");
+  const hasActions =
+    !!can(permissions, model.prefix, "update") ||
+    !!can(permissions, model.prefix, "delete");
   const newPath = `/content/${model.prefix}/new` as string;
   const search = useDebounced(searchText.trim());
   const [sort] = sorting;
@@ -99,38 +108,60 @@ const ModelList = ({ model }: { model: ModelSchema }) => {
 
   const columns = useMemo<ColumnDef<Row>[]>(
     () => [
-      {
-        id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Edit"
-              render={
-                <Link
-                  to={
-                    `/content/${model.prefix}/${row.original.id}/edit` as string
-                  }
-                />
-              }
-              nativeButton={false}
-            >
-              <PiPencilSimple />
-            </Button>
-            <Button
-              variant="danger-ghost"
-              size="icon"
-              aria-label="Delete"
-              onClick={() => setDeleting(row.original)}
-            >
-              <PiTrash />
-            </Button>
-          </div>
-        ),
-      },
+      // Only for someone who may change or delete at least some rows; each row then shows just
+      // the buttons that will work for it.
+      ...(hasActions
+        ? [
+            {
+              id: "actions",
+              header: () => <span className="sr-only">Actions</span>,
+              enableSorting: false,
+              cell: ({ row }) => (
+                <div className="flex justify-end gap-1">
+                  {canOn(
+                    permissions,
+                    model.prefix,
+                    "update",
+                    row.original,
+                    user.id,
+                  ) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Edit"
+                      render={
+                        <Link
+                          to={
+                            `/content/${model.prefix}/${row.original.id}/edit` as string
+                          }
+                        />
+                      }
+                      nativeButton={false}
+                    >
+                      <PiPencilSimple />
+                    </Button>
+                  )}
+                  {canOn(
+                    permissions,
+                    model.prefix,
+                    "delete",
+                    row.original,
+                    user.id,
+                  ) && (
+                    <Button
+                      variant="danger-ghost"
+                      size="icon"
+                      aria-label="Delete"
+                      onClick={() => setDeleting(row.original)}
+                    >
+                      <PiTrash />
+                    </Button>
+                  )}
+                </div>
+              ),
+            } satisfies ColumnDef<Row>,
+          ]
+        : []),
       ...model.form.filter(isListable).map(
         (form): ColumnDef<Row> => ({
           id: form.key,
@@ -146,7 +177,7 @@ const ModelList = ({ model }: { model: ModelSchema }) => {
         cell: ({ getValue }) => renderCell({ type: "datepicker" }, getValue()),
       },
     ],
-    [model],
+    [model, hasActions, permissions, user.id],
   );
 
   const rows = useMemo(
@@ -178,10 +209,12 @@ const ModelList = ({ model }: { model: ModelSchema }) => {
           onChange={(event) => setSearchText(event.target.value)}
           className="w-40 sm:w-64"
         />
-        <Button render={<Link to={newPath} />} nativeButton={false}>
-          <PiPlus />
-          <span className="hidden sm:inline">New</span>
-        </Button>
+        {mayCreate && (
+          <Button render={<Link to={newPath} />} nativeButton={false}>
+            <PiPlus />
+            <span className="hidden sm:inline">New</span>
+          </Button>
+        )}
       </HeaderActions>
 
       {records.isError && rows.length === 0 ? (
@@ -205,12 +238,18 @@ const ModelList = ({ model }: { model: ModelSchema }) => {
               <Empty
                 icon={<PiTray />}
                 title={`No ${model.name.toLowerCase()} yet`}
-                description="Records you add will show up here."
+                description={
+                  mayCreate
+                    ? "Records you add will show up here."
+                    : "There is nothing to show yet."
+                }
               >
-                <Button render={<Link to={newPath} />} nativeButton={false}>
-                  <PiPlus />
-                  Create the first one
-                </Button>
+                {mayCreate && (
+                  <Button render={<Link to={newPath} />} nativeButton={false}>
+                    <PiPlus />
+                    Create the first one
+                  </Button>
+                )}
               </Empty>
             )
           }
@@ -253,12 +292,20 @@ const ModelList = ({ model }: { model: ModelSchema }) => {
 // has already asked for, so it is usually in the cache.
 export const ContentListPage = () => {
   const { prefix } = useParams({ strict: false }) as { prefix: string };
+  const { permissions } = useSession();
   const schema = useQuery(schemaQuery(client));
   const model = schema.data?.models.find((item) => item.prefix === prefix);
 
   if (schema.isPending) return <Skeleton className="h-64 w-full" />;
   if (schema.isError) return <ListError onRetry={() => schema.refetch()} />;
   if (!model) return <p className="text-muted-foreground">No such model.</p>;
+  if (!canList(permissions, model.prefix)) {
+    return (
+      <p className="text-muted-foreground">
+        You do not have access to {model.name}.
+      </p>
+    );
+  }
 
   // A key per model: moving between two models resets the search and sorting.
   return <ModelList key={model.prefix} model={model} />;

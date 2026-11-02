@@ -111,6 +111,11 @@ The admin side, in `app/src`:
 - Signing out is in `components/user-menu.tsx` (the user at the foot of the sidebar, behind a `ConfirmDialog`): it calls
   `logout`, removes the cookie and the `["schema"]` and `["model"]` queries, and `Protected` then sends the page to
   `/login` through the router. Anything cached per session must be cleared there too.
+- What the user may do is `GET /api/auth/permissions`, already worked out by the server (wildcards, `own`/`all`,
+  token scopes, `ref`). `Protected` loads it with the user and shows nothing until both are in; pages read them with
+  `useSession()`. Use `can`, `canList` and `canOn` (`sdk/api/permissions.ts`) to show only what will work; do not
+  parse grants in the admin. The server still decides (403, or 404 for someone else's row). Clear `["permissions"]` on
+  sign out with the rest. Every new page and button follows it.
 - Pages before a session (login, setup) share `components/auth-layout.tsx` and `password-input.tsx`.
 - Do not store the token in `localStorage`, and do not reload the page to move between login and the admin: navigate
   with the router.
