@@ -11,6 +11,7 @@ import {
   PiStackDuotone,
   PiUsersDuotone,
 } from "react-icons/pi";
+import { ComponentsPage } from "../pages/components";
 import { client } from "./client";
 
 export const navs = {
@@ -51,6 +52,8 @@ export const routes = {
     // Dummy pages until the real ones exist.
     { path: "/files", component: Dashboard },
     { path: "/users", component: Dashboard },
+    // Kit showcase; reachable by URL only, it is not a menu entry.
+    { path: "/components", component: ComponentsPage },
   ] as PluginRoute[],
   plugins: [] as PluginRoute[],
 };

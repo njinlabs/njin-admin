@@ -7,6 +7,7 @@ export const sharedModules = [
   "@tanstack/react-query",
   "@tanstack/react-router",
   "@njinlabs/njin-admin/sdk",
+  "@njinlabs/njin-admin/ui",
 ] as const;
 
 export type SharedModule = (typeof sharedModules)[number];

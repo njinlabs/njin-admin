@@ -1,4 +1,5 @@
 import { defineAdminPlugin } from "@njinlabs/njin-admin/sdk";
+import { Button } from "@njinlabs/njin-admin/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PiChartBar } from "react-icons/pi";
@@ -19,6 +20,7 @@ const Reports = () => {
       >
         Clicked {count}
       </button>
+      <Button variant="outline">From the kit</Button>
       <Link to="/">Back to dashboard</Link>
     </div>
   );

@@ -1,5 +1,6 @@
 import * as sdk from "@njinlabs/njin-admin/sdk";
 import { exposeShared } from "@njinlabs/njin-admin/shared";
+import * as ui from "@njinlabs/njin-admin/ui";
 import * as reactQuery from "@tanstack/react-query";
 import * as reactRouter from "@tanstack/react-router";
 import React from "react";
@@ -17,6 +18,7 @@ exposeShared({
   "@tanstack/react-query": reactQuery,
   "@tanstack/react-router": reactRouter,
   "@njinlabs/njin-admin/sdk": sdk,
+  "@njinlabs/njin-admin/ui": ui,
 });
 
 await loadPlugins();

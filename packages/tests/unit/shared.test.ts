@@ -14,6 +14,7 @@ describe("exposeShared", () => {
       "@tanstack/react-query": {},
       "@tanstack/react-router": {},
       "@njinlabs/njin-admin/sdk": {},
+      "@njinlabs/njin-admin/ui": {},
     };
 
     exposeShared(modules);

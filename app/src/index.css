@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "@njinlabs/njin-admin/theme.css";
 
+/* The kit lives in the package, behind node_modules, where Tailwind does not look. */
+@source "../../packages/src/ui";
+
 /* Tailwind v4 borders default to currentColor; every border here is the token. */
 @layer base {
   *,

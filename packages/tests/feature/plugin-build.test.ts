@@ -12,6 +12,7 @@ import { renderToString } from "react-dom/server";
 import { build } from "vite";
 import * as sdk from "../../src/sdk";
 import { exposeShared } from "../../src/shared";
+import * as ui from "../../src/ui";
 import { adminPluginConfig } from "../../src/vite";
 
 const plugin = resolve(import.meta.dirname, "../fixtures/plugin");
@@ -42,6 +43,13 @@ describe("building and loading an admin plugin", () => {
     expect(code).toContain('globalThis.__njin["react/jsx-runtime"]');
   });
 
+  test("the bundle reads the kit from the admin instead of carrying Base UI", async () => {
+    const code = await Bun.file(built).text();
+
+    expect(code).toContain('globalThis.__njin["@njinlabs/njin-admin/ui"]');
+    expect(code).not.toContain("base-ui");
+  });
+
   test("the plugin loads and its icon renders with the admin's React", async () => {
     exposeShared({
       react: React,
@@ -50,6 +58,7 @@ describe("building and loading an admin plugin", () => {
       "@tanstack/react-query": reactQuery,
       "@tanstack/react-router": reactRouter,
       "@njinlabs/njin-admin/sdk": sdk,
+      "@njinlabs/njin-admin/ui": ui,
     });
 
     const { default: plugin } = await import(pathToFileURL(built).href);

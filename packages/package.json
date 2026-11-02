@@ -10,6 +10,7 @@
   "exports": {
     "./sdk": "./src/sdk/index.ts",
     "./shared": "./src/shared.ts",
+    "./ui": "./src/ui/index.ts",
     "./vite": "./src/vite.ts",
     "./theme.css": "./src/ui/theme.css",
     "./plugin.css": "./src/ui/plugin.css"
@@ -21,9 +22,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "react-day-picker": "^10.0.2",
     "rollup-plugin-external-globals": "^0.13.0",
+    "tailwind-merge": "^3.7.0",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
