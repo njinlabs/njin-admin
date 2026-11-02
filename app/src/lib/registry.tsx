@@ -3,7 +3,7 @@ import type {
   NavEntry,
   PluginRoute,
 } from "@njinlabs/njin-admin/sdk";
-import { getSchema } from "@njinlabs/njin-admin/sdk";
+import { getManifest, getSchema } from "@njinlabs/njin-admin/sdk";
 import {
   PiFolderOpenDuotone,
   PiGearDuotone,
@@ -63,14 +63,12 @@ const addStylesheet = (href: string) => {
 };
 
 export const loadPlugins = async () => {
-  const response = await fetch("/api/admin/manifest");
+  // njin core does not serve the manifest yet. Until it does the request fails (or the dev server
+  // answers with the page itself), and there are simply no plugins.
+  const manifest = await getManifest(client).catch(() => null);
+  if (!Array.isArray(manifest?.plugins)) return;
 
-  // njin core does not serve the manifest yet. Until it does the endpoint is missing (or the dev
-  // server answers with the page itself), and there are simply no plugins.
-  if (!response.ok || !response.headers.get("content-type")?.includes("json"))
-    return;
-
-  const { plugins } = await response.json();
+  const { plugins } = manifest;
 
   for (const { entry, styles = [] } of plugins) {
     for (const href of styles) addStylesheet(href);
