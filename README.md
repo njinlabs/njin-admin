@@ -5,7 +5,7 @@ The admin panel for njin, built so a site can add its own pages and menus as plu
 | Folder | What it is |
 | --- | --- |
 | `app/` | The admin itself (Vite + React). It loads plugins at runtime. |
-| `packages/` | `@njinlabs/njin-admin`: what a plugin imports (`/sdk`), the Vite preset that builds one (`/vite`), the shared-module list (`/shared`) and the CSS tokens (`/theme.css`, `/plugin.css`). |
+| `packages/` | `@njinlabs/njin-admin`: what a plugin imports (`/sdk`), the Vite preset that builds one (`/vite`), the shared-module list (`/shared`), the component kit (`/ui`) and the CSS tokens (`/theme.css`, `/plugin.css`). |
 
 ## Setup
 

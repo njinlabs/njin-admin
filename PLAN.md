@@ -16,7 +16,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
 - [x] Shell: layout dengan sidebar dari `navs`, judul halaman, token desain pertama dan mode gelap lewat
       `prefers-color-scheme` (`app/src/components/shell.tsx`, `theme.css`).
-- [x] Biome, 73 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Biome, 93 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
 - [x] Repo di GitHub (`njinlabs/njin-admin`, public), `LICENSE`, dan CI (biome, typecheck, tes, build admin).
 
 ## Belum terbukti
@@ -76,25 +76,46 @@ Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pi
 
 ## 4. Tampilan dan kit UI
 
-Menunggu keputusan arah visual; urutan di atas tidak bergantung padanya.
+Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
 
-- [ ] **Putuskan arah visual**. Token di `theme.css` sudah punya nilai pertama (palet abu-abu/ungu) dan set gelap,
-      tapi belum ada keputusan akhir dan belum ada kit UI.
-- [ ] Isi `packages/src/ui/` dan tambah export `./ui`: komponen headless (Base UI) dengan gaya sendiri.
-- [ ] Token final, mode gelap, dan dokumentasinya.
+- [x] **Warna utama diputuskan**: `#186049` jadi langkah 700 skala `primary` 50-950 (OKLCH, hue tetap). `primary` =
+      700 di mode terang, 400 di mode gelap. Token lain (abu-abu, `danger`) masih nilai pertama.
+- [x] **Kit di `packages/src/ui/`, export `./ui`** (Base UI, hanya token, dibagi ke plugin lewat `sharedModules`):
+      `Button`, `Field`/`FieldLabel`/`FieldDescription`/`FieldError`, `Input`, `Switch`, `Select`, `Popover`,
+      `Calendar` (react-day-picker), `DatePicker`. Halaman `/components` di admin untuk melihatnya.
+- [ ] Belum dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, mode gelap kit.
+- [ ] **Yang tidak butuh API**, urutan: `RenderForm` (text, email, numeric, boolean, select, datepicker, object, array;
+      butuh `react-hook-form` dan `react-number-format`), lalu `RichTextEditor` (TipTap).
+- [ ] **Yang butuh API (ditunda)**: `Combobox` untuk relation/multi_relation, `Dialog` dan pemilih file
+      (`file`/`multi_file`), lalu bagian relation dan file di `RenderForm`.
+- [ ] Komponen halaman (tabel data, paginasi, dialog konfirmasi, toast) saat halaman yang memakainya dikerjakan.
+- [ ] Token final dan dokumentasi kit untuk penulis plugin.
 
-## 5. Auth dan sesi (dikerjakan kolega, belum di-push)
+## 5. Auth dan sesi
 
-Jangan disentuh sebelum kode kolega masuk. Setelah itu:
+Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjakan kolega di core dan sudah ada di
+`main`; sisi admin ada di sini.
 
-- [ ] Interceptor token di `createClient`, penanganan 401, halaman login.
+- [x] Halaman login dan setup (`app/src/pages/`), dua kolom (`AuthLayout`), `react-hook-form` + zod, kit UI. Error
+      per field dari server ditempel lewat `setError`.
+- [x] Token di cookie `token` (`react-cookie`, path `/`, 30 hari seperti sesi server). `Protected` memeriksanya lewat
+      `check-token`, memasang header `Authorization`, memuat schema, dan membuang token yang ditolak. `Root` mengarahkan
+      semua halaman ke `/setup` sampai admin pertama ada.
+- [x] `loadSchema` hanya jalan setelah sesi diperiksa (di `Protected`, bukan lagi saat start).
+- [ ] Belum dicoba di browser, termasuk login dan setup sampai dashboard.
+- [ ] Logout: tombol di shell (`logout` sudah ada di sdk), hapus cookie dan header.
+- [ ] 401 di tengah sesi: sekarang baru ketahuan saat halaman dibuka ulang; tangani secara global.
+- [ ] Cookie `HttpOnly` dari server: login mengirim `Set-Cookie`, server membaca cookie, ada perlindungan CSRF. Pekerjaan
+      di core. Cookie sekarang ditulis script (server mengirim token di JSON), jadi bisa dibaca script lain di halaman,
+      sama seperti localStorage.
+- [ ] Plugin dimuat sebelum login. Bila `GET /api/admin/manifest` nanti butuh token, plugin tidak termuat setelah login
+      lewat router; cari cara memuatnya setelah sesi diperiksa.
 - [ ] Provider sesi tipis; `can(model, action)` dari scope OAuth per model.
 - [ ] Menu dan tombol mengikuti izin.
-- [ ] `loadSchema`/`getSchema` hanya jalan setelah login.
 
 ## 6. Integrasi di core njin
 
-Pekerjaan di repo `njin`. Menunggu auth kolega masuk supaya tidak bentrok.
+Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum menyentuh bagian yang sama.
 
 - [ ] `Plugin.admin.entry` dan `admin.plugins` di config (plugin lokal tanpa paket npm).
 - [ ] `GET /api/admin/manifest`, termasuk `styles` per plugin.
@@ -119,9 +140,9 @@ Pekerjaan di repo `njin`. Menunggu auth kolega masuk supaya tidak bentrok.
 1. ~~Cek di browser~~ dan ~~lapisan data (1)~~: selesai.
 2. Sidebar dari `useQuery(schemaQuery)`, lalu Content (2): daftar record dan form dari `model.form`/`model.schema`.
 4. Kontrak plugin (3) sebelum plugin pihak ketiga pertama.
-5. Integrasi core (6) dan auth (5) begitu kode kolega masuk.
+5. Integrasi core (6) dan sisa auth (5): logout, 401, izin.
 6. Settings, Files, Users, Analytics.
-7. Arah visual dan kit UI (4) paralel, kapan pun diputuskan.
+7. Kit UI (4) berjalan paralel: `RenderForm` dan `RichTextEditor` dulu; komponen yang butuh API menyusul.
 
 ## Catatan teknis yang perlu diingat
 
