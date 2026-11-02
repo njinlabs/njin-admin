@@ -4,15 +4,31 @@ import type {
   PluginRoute,
 } from "@njinlabs/njin-admin/sdk";
 import { getSchema } from "@njinlabs/njin-admin/sdk";
-import { PiFiles, PiGear, PiLayout } from "react-icons/pi";
+import {
+  PiFolderOpenDuotone,
+  PiGearDuotone,
+  PiSquaresFourDuotone,
+  PiStackDuotone,
+  PiUsersDuotone,
+} from "react-icons/pi";
 import { client } from "./client";
 
 export const navs = {
   main: [
     {
-      icon: () => <PiLayout />,
+      icon: () => <PiSquaresFourDuotone />,
       label: "Dashboard",
       to: "/",
+    },
+    {
+      icon: () => <PiFolderOpenDuotone />,
+      label: "Files",
+      to: "/files",
+    },
+    {
+      icon: () => <PiUsersDuotone />,
+      label: "Users",
+      to: "/users",
     },
   ] as NavEntry[],
   models: [] as NavEntry[],
@@ -20,9 +36,22 @@ export const navs = {
   vars: [] as NavEntry[],
 };
 
+const Dashboard = () => (
+  <div className="space-y-4">
+    <div className="rounded-control border border-border bg-surface p-4 text-muted-foreground">
+      Nothing here yet.
+    </div>
+  </div>
+);
+
 // The pages of the admin, in the order the router gets them: its own first, then the plugins'.
 export const routes = {
-  main: [{ path: "/", component: () => <p>Dashboard</p> }] as PluginRoute[],
+  main: [
+    { path: "/", component: Dashboard },
+    // Dummy pages until the real ones exist.
+    { path: "/files", component: Dashboard },
+    { path: "/users", component: Dashboard },
+  ] as PluginRoute[],
   plugins: [] as PluginRoute[],
 };
 
@@ -61,14 +90,14 @@ export const loadSchema = async () => {
 
   navs.models.push(
     ...models.map((model) => ({
-      icon: () => <PiFiles />,
+      icon: () => <PiStackDuotone />,
       label: model.name,
       to: `/content/${model.prefix}`,
     })),
   );
   navs.vars.push(
     ...vars.map((group) => ({
-      icon: () => <PiGear />,
+      icon: () => <PiGearDuotone />,
       label: group.name,
       to: `/settings/${group.prefix}`,
     })),

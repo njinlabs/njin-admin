@@ -4,9 +4,9 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
-  Outlet,
   type RouterHistory,
 } from "@tanstack/react-router";
+import { Shell } from "../components/shell";
 
 export type RouterContext = { queryClient: QueryClient };
 
@@ -26,7 +26,7 @@ export const createAdminRouter = ({
   history,
 }: Options) => {
   const root = createRootRouteWithContext<RouterContext>()({
-    component: Outlet,
+    component: Shell,
   });
 
   const children = routes.map(({ path, component }) =>

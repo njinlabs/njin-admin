@@ -1,2 +1,17 @@
 @import "tailwindcss";
 @import "@njinlabs/njin-admin/theme.css";
+
+/* Tailwind v4 borders default to currentColor; every border here is the token. */
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+}

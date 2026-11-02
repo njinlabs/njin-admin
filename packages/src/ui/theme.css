@@ -1,16 +1,35 @@
 /* The design tokens of the admin. Plugins read these as CSS variables, so a plugin follows
    the admin's look (and its dark mode) without carrying a copy. `static` makes the admin
    always write them out; by default Tailwind only writes the ones its own pages use, and a
-   token only a plugin uses would be undefined. The values are placeholders until the visual
-   direction is decided. */
+   token only a plugin uses would be undefined. Dark mode follows the system: the same
+   variables are redefined below, so nothing that reads them needs a `dark:` variant. */
 @theme static {
   --color-background: #ffffff;
-  --color-foreground: #111827;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-border: #e5e7eb;
-  --color-primary: #2563eb;
+  --color-surface: #f6f8fa;
+  --color-subtle: #eaeef2;
+  --color-foreground: #1f2328;
+  --color-muted: #f6f8fa;
+  --color-muted-foreground: #656d76;
+  --color-border: #d0d7de;
+  --color-primary: #8250df;
   --color-primary-foreground: #ffffff;
-  --color-danger: #dc2626;
-  --radius-control: 0.5rem;
+  --color-danger: #cf222e;
+  --radius-control: 0.375rem;
+  --font-mono:
+    ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0d1117;
+    --color-surface: #010409;
+    --color-subtle: #161b22;
+    --color-foreground: #e6edf3;
+    --color-muted: #161b22;
+    --color-muted-foreground: #7d8590;
+    --color-border: #30363d;
+    --color-primary: #a371f7;
+    --color-primary-foreground: #0d1117;
+    --color-danger: #f85149;
+  }
 }
