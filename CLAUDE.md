@@ -12,10 +12,11 @@ layout and how to run it.
   - `./shared`: `sharedModules` and `exposeShared`.
   - `./vite`: `adminPluginConfig`, the preset that builds a plugin.
   - `./theme.css`, `./plugin.css`: design tokens and a plugin's Tailwind entry (files live in `src/ui/`).
-- `playground/` and `app/public/mock/`: local only and gitignored, like `playground/` in njin core. They are a
-  scratch place for example plugins and the mock manifest. Nothing in the repo may depend on them. `playground/` is
-  not a workspace: each plugin in it has its own `package.json` and `bun.lock` and uses
-  `"@njinlabs/njin-admin": "link:@njinlabs/njin-admin"` (run `bun link` in `packages/` once), as in core.
+- Local only and gitignored, as `playground/` is in njin core: `playground/` (example plugins), `app/public/mock/` and
+  `app/vite.config.local.ts` (what stands in for the server while those are tried). Nothing tracked may depend on
+  them or mention them as part of the project. `playground/` is not a workspace: each plugin in it has its own
+  `package.json` and `bun.lock` and uses `"@njinlabs/njin-admin": "link:@njinlabs/njin-admin"` (run `bun link` in
+  `packages/` once), as in core.
 - Tests: `packages/tests/{unit,feature,fixtures}` and `app/tests/unit`. The plugin the feature tests build lives in
   `packages/tests/fixtures/plugin`.
 
@@ -48,9 +49,8 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
 - Plugin CSS reads the admin's tokens as `var(--color-*)`; it does not copy them. `theme.css` uses `@theme static`
   on purpose: without it Tailwind only writes the tokens the admin's own pages use. Token names are a contract with
   plugins, so do not rename them casually.
-- The manifest is a mock for now: `app/public/mock/manifest.json`, local and untracked, served by a dev-only
-  middleware in `app/vite.config.ts`. Without it the admin simply has no plugins. The real one comes from njin core
-  (`GET /api/admin/manifest`), not built yet.
+- The admin reads its plugins from `GET /api/admin/manifest`. njin core does not serve it yet; until then the
+  loader finds nothing and the admin has no plugins. Do not add mock manifests or servers to the repo.
 
 ## Conventions
 

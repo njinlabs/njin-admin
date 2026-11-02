@@ -12,7 +12,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
       (`theme.css` dengan `@theme static`, `plugin.css` untuk plugin).
 - [x] API bertipe dengan axios: model (CRUD, draft, i18n), vars, `queryOptions`.
 - [x] `/api/schema` diparse jadi `Field[]` (`getSchema`, `schemaQuery`); core njin sudah mengirim `{ models, vars, i18n }`.
-- [x] Router dari registry (`createAdminRouter`), manifest mock, server mock di dev.
+- [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
 - [x] Biome, git, 50 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
 
 ## Belum terbukti
@@ -89,7 +89,6 @@ Pekerjaan di repo `njin`. Menunggu auth kolega masuk supaya tidak bentrok.
       (`vite` sebagai peer/optional dependency, hanya wajib bila `admin.plugins` terisi).
 - [ ] Tes di core untuk semuanya.
 - [ ] Distribusi admin: aset rilis GitHub dan `adminVersion`, menggantikan `template/_admin` yang sudah usang.
-- [ ] Hapus pemuat manifest mock dan middleware mock setelah manifest asli ada.
 - [ ] Catat perubahan breaking `GET /api/schema` (`data` jadi `models`) di CHANGELOG bila ada.
 
 ## 7. Tooling dan rilis

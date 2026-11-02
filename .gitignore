@@ -28,6 +28,7 @@ logs
 .idea
 .DS_Store
 
-# local only, as in njin core: example plugins and the mock manifest the app loads in dev
+# local only, as in njin core: example plugins and what stands in for the server while they are tried
 playground/
 app/public/mock/
+app/vite.config.local.ts
