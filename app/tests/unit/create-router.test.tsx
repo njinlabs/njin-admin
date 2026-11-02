@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { QueryClient } from "@tanstack/react-query";
-import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
+import {
+  createMemoryHistory,
+  Outlet,
+  RouterProvider,
+} from "@tanstack/react-router";
 import { renderToString } from "react-dom/server";
 import { createAdminRouter } from "../../src/lib/create-router";
 
@@ -11,6 +15,8 @@ const render = async (
   const router = createAdminRouter({
     routes,
     queryClient: new QueryClient(),
+    root: Outlet,
+    layout: Outlet,
     history: createMemoryHistory({ initialEntries: [url] }),
   });
   await router.load();
@@ -44,6 +50,8 @@ describe("createAdminRouter", () => {
     const router = createAdminRouter({
       routes,
       queryClient,
+      root: Outlet,
+      layout: Outlet,
       history: createMemoryHistory({ initialEntries: ["/_admin/"] }),
     });
 

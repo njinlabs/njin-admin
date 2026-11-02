@@ -9,12 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^7.0.1",
     "@njinlabs/njin-admin": "workspace:*",
     "@tanstack/react-query": "^5.105.1",
     "@tanstack/react-router": "^1.170.46",
     "react": "^19.2.6",
+    "react-cookie": "^8.1.2",
     "react-dom": "^19.2.6",
-    "react-icons": "^5.7.0"
+    "react-hook-form": "^7.91.0",
+    "react-icons": "^5.7.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",

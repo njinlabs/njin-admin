@@ -89,6 +89,10 @@ export const loadPlugins = async () => {
 export const loadSchema = async () => {
   const { models, vars } = await getSchema(client);
 
+  // Signing in again loads it again; the menu must not list everything twice.
+  navs.models.length = 0;
+  navs.vars.length = 0;
+
   navs.models.push(
     ...models.map((model) => ({
       icon: () => <PiStackDuotone />,

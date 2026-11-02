@@ -6,14 +6,21 @@ import {
   createRouter,
   type RouterHistory,
 } from "@tanstack/react-router";
-import { Shell } from "../components/shell";
+import type { FC } from "react";
+import { Protected } from "../components/protected";
+import { Root } from "../components/root";
+import { LoginPage } from "../pages/login";
+import { SetupPage } from "../pages/setup";
 
 export type RouterContext = { queryClient: QueryClient };
 
 type Options = {
   routes: PluginRoute[];
   queryClient: QueryClient;
-  // Only tests pass this (memory history); the browser's is the default.
+  // Only tests pass these: a memory history (the browser's is the default) and replacements for
+  // the two layers that ask the server something.
+  root?: FC;
+  layout?: FC;
   history?: RouterHistory;
 };
 
@@ -23,18 +30,40 @@ type Options = {
 export const createAdminRouter = ({
   routes,
   queryClient,
+  root: rootComponent = Root,
+  layout = Protected,
   history,
 }: Options) => {
   const root = createRootRouteWithContext<RouterContext>()({
-    component: Shell,
+    component: rootComponent,
+  });
+
+  // The pages that need the sidebar sit under a pathless layout; the login page does not. Signed out,
+  // the layout sends you to the login page, and the login page sends a signed-in user back.
+  const shell = createRoute({
+    getParentRoute: () => root,
+    id: "shell",
+    component: layout,
+  });
+
+  const login = createRoute({
+    getParentRoute: () => root,
+    path: "/login",
+    component: LoginPage,
+  });
+
+  const setup = createRoute({
+    getParentRoute: () => root,
+    path: "/setup",
+    component: SetupPage,
   });
 
   const children = routes.map(({ path, component }) =>
-    createRoute({ getParentRoute: () => root, path, component }),
+    createRoute({ getParentRoute: () => shell, path, component }),
   );
 
   return createRouter({
-    routeTree: root.addChildren(children),
+    routeTree: root.addChildren([setup, login, shell.addChildren(children)]),
     basepath: "/_admin",
     context: { queryClient },
     defaultNotFoundComponent: () => <p>Not found</p>,

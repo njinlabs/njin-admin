@@ -5,11 +5,12 @@ import * as reactQuery from "@tanstack/react-query";
 import * as reactRouter from "@tanstack/react-router";
 import React from "react";
 import * as jsxRuntime from "react/jsx-runtime";
+import { CookiesProvider } from "react-cookie";
 import * as ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { createAdminRouter } from "./lib/create-router";
-import { loadPlugins, loadSchema, routes } from "./lib/registry";
+import { loadPlugins, routes } from "./lib/registry";
 
 exposeShared({
   react: React,
@@ -22,9 +23,6 @@ exposeShared({
 });
 
 await loadPlugins();
-// Needs a login, which is not built yet: until then the schema request is refused, and the
-// menu shows only the main entries and the plugins.
-await loadSchema().catch(console.error);
 
 const queryClient = new reactQuery.QueryClient();
 const router = createAdminRouter({
@@ -34,7 +32,9 @@ const router = createAdminRouter({
 
 // Placeholder: proves app -> sdk -> registry is wired. Replaced by the real shell.
 createRoot(document.getElementById("root")!).render(
-  <reactQuery.QueryClientProvider client={queryClient}>
-    <reactRouter.RouterProvider router={router} />
-  </reactQuery.QueryClientProvider>,
+  <CookiesProvider>
+    <reactQuery.QueryClientProvider client={queryClient}>
+      <reactRouter.RouterProvider router={router} />
+    </reactQuery.QueryClientProvider>
+  </CookiesProvider>,
 );

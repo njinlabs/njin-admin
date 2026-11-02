@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, isAxiosError } from "axios";
 
 export * from "./analytics";
+export * from "./auth";
 export * from "./file";
 export * from "./model";
 export * from "./setup";
