@@ -75,3 +75,28 @@ export const canList = (permissions: Permissions, resource: string) => {
 
   return level === "all" || level === "own";
 };
+
+// What a grant can name, from GET /api/access/catalog: the same list the server checks a group's
+// grants against.
+export type CatalogEntry = {
+  resource: string;
+  actions: string[];
+  // Whether "own" means anything here: settings groups and analytics have no per-row owner.
+  scoped: boolean;
+};
+
+export const getAccessCatalog = async (
+  client: AxiosInstance,
+): Promise<CatalogEntry[]> => {
+  const { data } = await client.get<{ data: CatalogEntry[] }>(
+    "/api/access/catalog",
+  );
+
+  return data.data;
+};
+
+export const accessCatalogQuery = (client: AxiosInstance) =>
+  queryOptions({
+    queryKey: ["access", "catalog"],
+    queryFn: () => getAccessCatalog(client),
+  });

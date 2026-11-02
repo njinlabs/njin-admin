@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { renderToString } from "react-dom/server";
-import { Field, Select, Switch } from "../../../src/ui";
+import { Checkbox, Field, MultiSelect, Select, Switch } from "../../../src/ui";
 
 const options = [
   { value: "draft", label: "Draft" },
@@ -50,5 +50,46 @@ describe("Select", () => {
     );
 
     expect(html).toContain("Pick one");
+  });
+});
+
+describe("Checkbox", () => {
+  test("renders checked and unchecked", () => {
+    const on = renderToString(<Checkbox checked onCheckedChange={() => {}} />);
+    const off = renderToString(
+      <Checkbox checked={false} onCheckedChange={() => {}} />,
+    );
+
+    expect(on).toContain('aria-checked="true"');
+    expect(off).toContain('aria-checked="false"');
+  });
+});
+
+describe("MultiSelect", () => {
+  test("shows the label of every chosen option, not its value", () => {
+    const html = renderToString(
+      <MultiSelect
+        options={options}
+        value={["draft", "live"]}
+        onValueChange={() => {}}
+      />,
+    );
+
+    expect(html).toContain("Draft");
+    expect(html).toContain("Published");
+    expect(html).not.toContain(">live<");
+  });
+
+  test("shows the placeholder when nothing is chosen", () => {
+    expect(
+      renderToString(
+        <MultiSelect
+          options={options}
+          value={[]}
+          onValueChange={() => {}}
+          placeholder="Pick some"
+        />,
+      ),
+    ).toContain("Pick some");
   });
 });

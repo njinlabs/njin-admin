@@ -1,10 +1,13 @@
+export { Badge, type BadgeProps } from "./badge";
 export { Button, type ButtonProps } from "./button";
 export { Calendar } from "./calendar";
+export { Checkbox } from "./checkbox";
 export { cn } from "./cn";
 export { ConfirmDialog } from "./confirm-dialog";
 export { DatePicker, formatDate } from "./date-picker";
 export { Field, FieldDescription, FieldError, FieldLabel } from "./field";
 export { Input } from "./input";
+export { MultiSelect } from "./multi-select";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { Select, type SelectOption } from "./select";
 export { Skeleton } from "./skeleton";

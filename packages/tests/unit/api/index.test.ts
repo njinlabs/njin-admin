@@ -43,7 +43,20 @@ describe("toApiError", () => {
       status: 404,
       message: "Not Found",
       fields: {},
+      details: [],
     });
+  });
+
+  test("keeps errors that are plain sentences apart from the fields", async () => {
+    const error = await caught(
+      failing(422, {
+        message: "Some grants are not valid",
+        errors: ['"ghost:read": unknown resource "ghost"'],
+      }),
+    );
+
+    expect(error.details).toEqual(['"ghost:read": unknown resource "ghost"']);
+    expect(error.fields).toEqual({});
   });
 
   test("maps validation errors to the field they belong to", async () => {

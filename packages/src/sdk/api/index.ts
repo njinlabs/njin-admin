@@ -3,6 +3,7 @@ import axios, { type AxiosInstance, isAxiosError } from "axios";
 export * from "./analytics";
 export * from "./auth";
 export * from "./file";
+export * from "./grants";
 export * from "./model";
 export * from "./permissions";
 export * from "./setup";
@@ -34,12 +35,14 @@ export type ApiError = {
   status?: number;
   message: string;
   fields: Record<string, string>;
+  // Problems the server lists as plain sentences, tied to no field (a group's invalid grants).
+  details: string[];
 };
 
 type ErrorBody = {
   message?: string;
   field?: string;
-  errors?: { path?: string; message?: string }[];
+  errors?: ({ path?: string; message?: string } | string)[];
 };
 
 // Any thrown value as an ApiError, from the bodies njin sends: { message },
@@ -49,18 +52,26 @@ export const toApiError = (error: unknown): ApiError => {
     return {
       message: error instanceof Error ? error.message : "Something went wrong",
       fields: {},
+      details: [],
     };
   }
 
   const { response } = error;
   if (!response) {
-    return { message: "Could not reach the server", fields: {} };
+    return { message: "Could not reach the server", fields: {}, details: [] };
   }
 
   const { message, field, errors = [] } = response.data ?? {};
   const fields: Record<string, string> = {};
 
+  const details: string[] = [];
+
   for (const entry of errors) {
+    if (typeof entry === "string") {
+      details.push(entry);
+      continue;
+    }
+
     // The first message of a field is the one to show.
     if (entry.path && entry.message && !(entry.path in fields)) {
       fields[entry.path] = entry.message;
@@ -72,5 +83,6 @@ export const toApiError = (error: unknown): ApiError => {
     status: response.status,
     message: message ?? error.message,
     fields,
+    details,
   };
 };

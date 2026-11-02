@@ -6,7 +6,7 @@ import { useState } from "react";
 import { PiList, PiX } from "react-icons/pi";
 import { client } from "../lib/client";
 import { mainNavs, navs, schemaNavs } from "../lib/registry";
-import { HeaderSlot } from "./header-slot";
+import { HeaderSlot, PageTitleContext } from "./header-slot";
 import { useSession } from "./session";
 import { UserMenu } from "./user-menu";
 
@@ -104,6 +104,7 @@ const Nav = ({
 export const Shell = ({ user }: { user: Row }) => {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [pageTitle, setPageTitle] = useState<string | null>(null);
   const schema = useQuery(schemaQuery(client));
   const { permissions } = useSession();
   const { models, vars } = schemaNavs(
@@ -128,6 +129,7 @@ export const Shell = ({ user }: { user: Row }) => {
   ];
   const current = useCurrent(sections);
   const Icon = current?.icon;
+  const title = pageTitle ?? current?.label;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -168,23 +170,25 @@ export const Shell = ({ user }: { user: Row }) => {
             {open ? <PiX className="size-5" /> : <PiList className="size-5" />}
           </button>
           {/* React hoists <title> into <head>, so the tab follows the page without a helmet library. */}
-          <title>{current ? `${current.label} · njin` : "njin"}</title>
+          <title>{title ? `${title} · njin` : "njin"}</title>
           <h1 className="flex min-w-0 items-center gap-3 text-lg font-semibold">
             {Icon && (
               <span className="grid size-8 shrink-0 place-items-center rounded-control border border-border bg-subtle text-primary [&>svg]:size-5">
                 <Icon />
               </span>
             )}
-            <span className="truncate">{current?.label}</span>
+            <span className="truncate">{title}</span>
           </h1>
           <div ref={setSlot} className="ml-auto flex items-center gap-2" />
         </header>
-        <HeaderSlot value={slot}>
-          {/* Padded, unless the page holds something that runs edge to edge (a table marks itself with data-bleed). */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 has-[[data-bleed]]:p-0 md:px-8 md:has-[[data-bleed]]:p-0">
-            <Outlet />
-          </div>
-        </HeaderSlot>
+        <PageTitleContext value={setPageTitle}>
+          <HeaderSlot value={slot}>
+            {/* Padded, unless the page holds something that runs edge to edge (a table marks itself with data-bleed). */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 has-[[data-bleed]]:p-0 md:px-8 md:has-[[data-bleed]]:p-0">
+              <Outlet />
+            </div>
+          </HeaderSlot>
+        </PageTitleContext>
       </main>
     </div>
   );

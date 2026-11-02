@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToString } from "react-dom/server";
 import {
+  Badge,
   Button,
   ConfirmDialog,
   cn,
@@ -107,5 +108,19 @@ describe("Button danger-ghost", () => {
 
     expect(html).toContain("text-danger");
     expect(html).not.toContain("bg-danger ");
+  });
+});
+
+describe("Badge", () => {
+  test("applies the variant and keeps the caller's class last", () => {
+    const html = renderToString(
+      <Badge variant="primary" className="uppercase">
+        Admin
+      </Badge>,
+    );
+
+    expect(html).toContain("text-primary");
+    expect(html).toContain("uppercase");
+    expect(html).toContain("Admin");
   });
 });

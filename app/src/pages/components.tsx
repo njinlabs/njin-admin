@@ -1,6 +1,8 @@
 import {
+  Badge,
   Button,
   Calendar,
+  Checkbox,
   ConfirmDialog,
   DatePicker,
   Field,
@@ -8,6 +10,7 @@ import {
   FieldError,
   FieldLabel,
   Input,
+  MultiSelect,
   Select,
   Skeleton,
   Switch,
@@ -46,6 +49,8 @@ export const ComponentsPage = () => {
   const [invalidOn, setInvalidOn] = useState(false);
   const [date, setDate] = useState<string | undefined>();
   const [confirming, setConfirming] = useState(false);
+  const [agreed, setAgreed] = useState(true);
+  const [chosen, setChosen] = useState<string[]>(["draft"]);
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -146,6 +151,39 @@ export const ComponentsPage = () => {
             <FieldLabel>Disabled</FieldLabel>
           </Field>
         </div>
+      </Section>
+
+      <Section title="Badge">
+        <div className="flex flex-wrap gap-2">
+          <Badge>Default</Badge>
+          <Badge variant="primary">Primary</Badge>
+          <Badge variant="danger">Danger</Badge>
+        </div>
+      </Section>
+
+      <Section title="Checkbox">
+        <div className="space-y-3">
+          <Field orientation="horizontal">
+            <Checkbox checked={agreed} onCheckedChange={setAgreed} />
+            <FieldLabel>Agreed ({String(agreed)})</FieldLabel>
+          </Field>
+          <Field orientation="horizontal" disabled>
+            <Checkbox />
+            <FieldLabel>Disabled</FieldLabel>
+          </Field>
+        </div>
+      </Section>
+
+      <Section title="MultiSelect">
+        <Field className="max-w-sm">
+          <FieldLabel>Statuses ({chosen.join(", ") || "none"})</FieldLabel>
+          <MultiSelect
+            options={statuses}
+            value={chosen}
+            onValueChange={setChosen}
+            placeholder="Pick some"
+          />
+        </Field>
       </Section>
 
       <Section title="Select">

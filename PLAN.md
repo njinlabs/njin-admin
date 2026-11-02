@@ -64,7 +64,13 @@ teruji sendiri.
       draft/publish, i18n per bahasa.
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
 - [ ] **Files**: pustaka berkas dan unggah.
-- [ ] **Users**.
+- [x] **Users** (`pages/users/`): daftar user dan daftar access group dalam satu bagian (tab di `/users` dan
+      `/users/groups`), form buat/ubah keduanya. Daftar memakai `RecordList` (diekstrak dari daftar konten). Form user:
+      field group hanya muncul bila boleh `access_group:update` (server menolak bila tidak). Form group: `GrantsEditor`
+      menggambar tabel resource x aksi dari `GET /api/access/catalog` (sel Tidak/Own/All, kotak centang untuk settings
+      dan analytics, sakelar Full access); nilainya tetap daftar string grant, wildcard yang tak punya sel ditampilkan
+      sebagai badge dan ikut tersimpan (`splitGrants`/`joinGrants` di `sdk/api/grants.ts`). Kit bertambah: `Badge`,
+      `Checkbox`, `MultiSelect`. Belum dicoba di browser.
 - [ ] **Analytics** dan **Dashboard**.
 - [ ] Editor richtext (TipTap, konfigurasi dari admin lama) dan pemilih relasi/file.
 
@@ -124,8 +130,8 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
       `Protected` bersama user sebelum halaman mana pun tampil, lalu dibaca lewat `useSession()`. `can`, `canList` dan
       `canOn` (untuk satu baris, baris sendiri pada level `own`) ada di `sdk/api/permissions.ts`.
 - [ ] Menu dan tombol mengikuti izin: sudah di menu (Content, Settings, Files, Users) dan daftar konten (New, Edit, Hapus,
-      empty state). Tinggal form, publish, halaman Settings/Files/Users dan akses langsung lewat URL di tiap halaman baru.
-- [ ] Layar access group (grant per resource dari `GET /api/access/catalog`) dan hook izin untuk plugin (sdk hanya
+      empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Tinggal form konten, publish, halaman Settings/Files.
+- [ ] Hook izin untuk plugin (sdk hanya
       punya fungsi murni; `useSession` ada di admin dan belum dibagi).
 
 ## 6. Integrasi di core njin

@@ -22,6 +22,17 @@ const ariaSort: Record<string, "ascending" | "descending"> = {
 const pinned = (column: Column<any>, background: string) =>
   column.getIsPinned() === "left" ? `sticky left-0 ${background}` : "";
 
+// A pinned column holds the row buttons and keeps the width its definition gives it (`size`);
+// left to the table it would take more or less room with whatever buttons the rows show.
+const fixed = (column: Column<any>) =>
+  column.getIsPinned()
+    ? {
+        width: column.getSize(),
+        minWidth: column.getSize(),
+        maxWidth: column.getSize(),
+      }
+    : undefined;
+
 const skeletonRows = [0, 1, 2, 3, 4];
 
 // Calls `onEnd` whenever the end of the scroll container is near. The observer is made again
@@ -92,6 +103,7 @@ export const DataTable = <T,>({
                   <th
                     key={header.id}
                     scope="col"
+                    style={fixed(header.column)}
                     aria-sort={ariaSort[String(header.column.getIsSorted())]}
                     className={`px-3 py-3 font-medium whitespace-nowrap ${pinned(header.column, "bg-subtle")}`}
                   >
@@ -135,6 +147,7 @@ export const DataTable = <T,>({
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
+                      style={fixed(cell.column)}
                       className={`px-3 py-2 ${pinned(cell.column, "bg-background group-hover:bg-subtle")}`}
                     >
                       {flexRender(

@@ -15,6 +15,10 @@ import {
 } from "react-icons/pi";
 import { ComponentsPage } from "../pages/components";
 import { ContentListPage } from "../pages/content-list";
+import { GroupFormPage } from "../pages/users/group-form";
+import { GroupsListPage } from "../pages/users/groups-list";
+import { UserFormPage } from "../pages/users/user-form";
+import { UsersListPage } from "../pages/users/users-list";
 import { client } from "./client";
 
 export const navs = {
@@ -52,7 +56,12 @@ export const routes = {
     { path: "/", component: Dashboard },
     // Dummy pages until the real ones exist.
     { path: "/files", component: Dashboard },
-    { path: "/users", component: Dashboard },
+    { path: "/users", component: UsersListPage },
+    { path: "/users/new", component: UserFormPage },
+    { path: "/users/$id/edit", component: UserFormPage },
+    { path: "/users/groups", component: GroupsListPage },
+    { path: "/users/groups/new", component: GroupFormPage },
+    { path: "/users/groups/$id/edit", component: GroupFormPage },
     { path: "/content/$prefix", component: ContentListPage },
     { path: "/settings/$prefix", component: Dashboard },
     // Kit showcase; reachable by URL only, it is not a menu entry.
