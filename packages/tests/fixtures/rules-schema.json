@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "label": "Title",
+      "renderAs": "text",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 10
+    },
+    "code": {
+      "label": "Code",
+      "renderAs": "text",
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "contact": {
+      "label": "Contact",
+      "renderAs": "text",
+      "type": "string",
+      "format": "email",
+      "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+    },
+    "age": {
+      "type": "number",
+      "minimum": 18,
+      "maximum": 99,
+      "label": "Age",
+      "renderAs": "numeric"
+    },
+    "score": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 10,
+      "label": "Score",
+      "renderAs": "numeric"
+    },
+    "links": {
+      "label": "Links",
+      "renderAs": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "type": "array",
+      "items": {
+        "label": "Link",
+        "renderAs": "text",
+        "type": "string"
+      }
+    },
+    "tags": {
+      "label": "Tags",
+      "renderAs": "multi_relation",
+      "model": "tag",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "a",
+        "b"
+      ],
+      "label": "Kind",
+      "renderAs": "select"
+    }
+  },
+  "required": [
+    "title",
+    "code",
+    "contact",
+    "age",
+    "score",
+    "links",
+    "tags",
+    "kind"
+  ],
+  "additionalProperties": false
+}
