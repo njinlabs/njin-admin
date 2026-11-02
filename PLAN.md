@@ -25,13 +25,18 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 
 Murni logika, tidak butuh UI, dan dipakai semua halaman nanti.
 
-- [ ] **Form dari `Field[]`**: `getDefaultValues(fields)`, validator dari `Field[]` (wajib, nullable, enum, tipe),
-      ekstraksi id relasi/file sebelum kirim (port `transformSchema` dari admin lama).
-- [ ] **Normalisasi error API**: ambil `message` dari respons, petakan error validasi server per field.
-- [ ] **Endpoint yang belum dibungkus**: `/api/file` (list, upload multipart, hapus), `/api/users`,
-      `/api/analytics/*`, `/api/setup/status`.
-- [ ] **Mutation options** (create, update, destroy, draft action) yang meng-invalidate `["model", prefix]`,
-      pasangan dari `queryOptions` yang ada.
+- [x] **Satu schema zod, 1:1 dengan backend** (`sdk/schema/schema.ts`): `lib/schema.ts` lama dipindah tanpa perubahan logika
+      (`transformSchema`, `toForm`, `getDefaultValues`). `getSchema` membuat `z.fromJSONSchema` lalu `transformSchema` dan
+      `toForm` untuk tiap model dan grup vars, persis seperti `app-sidebar.tsx` lama. Aturan (panjang, pola, email,
+      rentang) ikut dari JSON schema tanpa ditulis ulang.
+- [x] **Dua celah di `schema.ts` lama ditutup**: kolom `nullable` (union tanpa meta dari `anyOf [X, null]`) dan
+      `minItems`/`maxItems` (array dibangun ulang tanpa aturan panjangnya). Perbaikan kecil di `unwrap` dan `transformType`,
+      dengan tes terhadap schema asli server.
+- [x] **Normalisasi error API**: `toApiError` (pesan, status, error per field dari 422 dan 409).
+- [x] **Endpoint yang belum dibungkus**: file (`uploadFile`), analytics (`getAnalytics`), setup. Users dan daftar/hapus file
+      memakai `modelApi(client, "user")` / `modelApi(client, "file")`.
+- [x] **Mutation options** (create, update, destroy, draft, removeLocale, vars, upload) yang meng-invalidate
+      `["model", prefix]`, pasangan dari `queryOptions`.
 
 ## 2. Shell dan fitur bawaan
 

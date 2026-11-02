@@ -1,4 +1,8 @@
-import { queryOptions } from "@tanstack/react-query";
+import {
+  mutationOptions,
+  type QueryClient,
+  queryOptions,
+} from "@tanstack/react-query";
 import type { AxiosInstance } from "axios";
 
 // A record as the server returns it. Narrow it per model: `readRecords<Post>(...)`.
@@ -208,4 +212,77 @@ export const recordQuery = <T extends Row = Row>(
   queryOptions({
     queryKey: ["model", prefix, "show", id, query],
     queryFn: () => showRecord<T>(client, prefix, id, query),
+  });
+
+// Mutation options for useMutation. Each refreshes every list and record of the model when it
+// succeeds, so the screens showing it are never stale after a write.
+export const createRecordMutation = <
+  T extends Row = Row,
+  Input extends Record<string, unknown> = Record<string, unknown>,
+>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: (input: Input) => createRecord<T, Input>(client, prefix, input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["model", prefix] }),
+  });
+
+export const updateRecordMutation = <
+  T extends Row = Row,
+  Input extends Record<string, unknown> = Record<string, unknown>,
+>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: ({ id, input }: { id: string; input: Partial<Input> }) =>
+      updateRecord<T, Input>(client, prefix, id, input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["model", prefix] }),
+  });
+
+export const destroyRecordMutation = <T extends Row = Row>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: (id: string) => destroyRecord<T>(client, prefix, id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["model", prefix] }),
+  });
+
+export const draftActionMutation = <T extends Row = Row>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: ({
+      id,
+      action,
+      locales,
+    }: {
+      id: string;
+      action: DraftAction;
+      locales?: string[];
+    }) => draftAction<T>(client, prefix, id, action, locales),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["model", prefix] }),
+  });
+
+export const removeLocaleMutation = <T extends Row = Row>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: ({ id, locale }: { id: string; locale: string }) =>
+      removeLocale<T>(client, prefix, id, locale),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["model", prefix] }),
   });

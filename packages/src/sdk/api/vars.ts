@@ -1,4 +1,8 @@
-import { queryOptions } from "@tanstack/react-query";
+import {
+  mutationOptions,
+  type QueryClient,
+  queryOptions,
+} from "@tanstack/react-query";
 import type { AxiosInstance } from "axios";
 import { type ReadQuery, toParams } from "./model";
 
@@ -37,4 +41,16 @@ export const varsQuery = <T extends Record<string, unknown>>(
   queryOptions({
     queryKey: ["vars", prefix, query],
     queryFn: () => getVars<T>(client, prefix, query),
+  });
+
+// Refreshes the group (working copy and published) when the write succeeds.
+export const updateVarsMutation = <T extends Record<string, unknown>>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: (input: Partial<T>) => updateVars<T>(client, prefix, input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["vars", prefix] }),
   });

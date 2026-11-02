@@ -1,13 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { QueryClient } from "@tanstack/react-query";
 import {
+  createRecordMutation,
+  destroyRecordMutation,
+  draftActionMutation,
   modelApi,
   readRecords,
   recordQuery,
   recordsQuery,
+  removeLocaleMutation,
   toParams,
+  updateRecordMutation,
 } from "../../../src/sdk/api/model";
-import { capture } from "./capture";
+import { capture, runMutation } from "./capture";
 
 test("lists become comma-joined strings", () => {
   const params = toParams({
@@ -173,5 +178,70 @@ describe("query options", () => {
     expect(queries.getQueryState(list)?.isInvalidated).toBe(true);
     expect(queries.getQueryState(one)?.isInvalidated).toBe(true);
     expect(queries.getQueryState(other)?.isInvalidated).toBe(false);
+  });
+});
+
+describe("mutation options", () => {
+  const stale = (queries: QueryClient, key: readonly unknown[]) =>
+    queries.getQueryState([...key])?.isInvalidated;
+
+  test("create sends the input, then refreshes the model's queries", async () => {
+    const queries = new QueryClient();
+    const { client, sent } = capture({ data: { id: "9" } });
+    const list = [...recordsQuery(client, "post").queryKey];
+    const other = [...recordsQuery(client, "tag").queryKey];
+    queries.setQueryData(list, 1);
+    queries.setQueryData(other, 1);
+
+    const options = createRecordMutation(client, queries, "post");
+    await runMutation(options, { title: "hi" });
+
+    expect(sent[0]).toMatchObject({ method: "post", url: "/api/post" });
+    expect(stale(queries, list)).toBe(true);
+    expect(stale(queries, other)).toBe(false);
+  });
+
+  test("update takes the id and the input together", async () => {
+    const { client, sent } = capture();
+    const options = updateRecordMutation(client, new QueryClient(), "post");
+
+    await runMutation(options, { id: "3", input: { title: "x" } });
+
+    expect(sent[0]).toMatchObject({ method: "put", url: "/api/post/3" });
+  });
+
+  test("destroy takes the id", async () => {
+    const { client, sent } = capture();
+    const options = destroyRecordMutation(client, new QueryClient(), "post");
+
+    await runMutation(options, "3");
+
+    expect(sent[0]).toMatchObject({ method: "delete", url: "/api/post/3" });
+  });
+
+  test("draft takes the action and the locales", async () => {
+    const { client, sent, uri } = capture();
+    const options = draftActionMutation(client, new QueryClient(), "post");
+
+    await runMutation(options, {
+      id: "3",
+      action: "unpublish",
+      locales: ["en"],
+    });
+
+    expect(sent[0]?.method).toBe("post");
+    expect(uri()).toBe("/api/post/3/unpublish?locale=en");
+  });
+
+  test("removing a language is a mutation too", async () => {
+    const { client, sent } = capture();
+    const options = removeLocaleMutation(client, new QueryClient(), "post");
+
+    await runMutation(options, { id: "3", locale: "id" });
+
+    expect(sent[0]).toMatchObject({
+      method: "delete",
+      url: "/api/post/3/locale/id",
+    });
   });
 });
