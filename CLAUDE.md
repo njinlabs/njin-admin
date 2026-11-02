@@ -1,14 +1,18 @@
 # njin-admin
 
 The admin panel for njin (the framework at `D:/private/njin`). Its point: a site can add its own pages and
-menus as plugins, without forking the admin. `PLAN.md` has what is done and what is left; `README.md` has the
-layout and how to run it.
+menus as plugins, without forking the admin. The repo is public at github.com/njinlabs/njin-admin. `PLAN.md` has what
+is done and what is left; `README.md` has the layout and how to run it.
 
 ## Layout
 
 - `app/`: the admin (Vite 8, React 19, TanStack Router and Query, Tailwind v4). Loads plugins at runtime.
+  `src/lib/` has the `client` (the one axios instance), the `registry` (menus, pages, plugin and schema loading) and
+  `createAdminRouter`; `src/components/shell.tsx` is the layout with the sidebar.
 - `packages/`: `@njinlabs/njin-admin`, one library with subpath exports:
-  - `./sdk`: what a plugin imports (`defineAdminPlugin`, the typed API in `sdk/api`, the `/api/schema` parser in `sdk/schema`).
+  - `./sdk`: what a plugin imports. `defineAdminPlugin`; `sdk/api` (`index.ts` client, manifest and `toApiError`;
+    `model.ts` records and their query and mutation options; `vars.ts` settings; `file.ts`, `analytics.ts`, `setup.ts`);
+    `sdk/schema` (`schema.ts` is the JSON-schema-to-zod pipeline, `index.ts` is `getSchema`).
   - `./shared`: `sharedModules` and `exposeShared`.
   - `./vite`: `adminPluginConfig`, the preset that builds a plugin.
   - `./theme.css`, `./plugin.css`: design tokens and a plugin's Tailwind entry (files live in `src/ui/`).
@@ -30,7 +34,8 @@ bun run typecheck    # every workspace (native tsc, TypeScript 7)
 bun run lint         # biome check; lint:fix / format to apply
 ```
 
-Run all three of test, typecheck and lint before calling work done. Vite configs that import workspace
+Run all three of test, typecheck and lint before calling work done. CI (`.github/workflows/ci.yml`) runs the same on
+every push and PR (`biome ci`, typecheck, tests, a build of the admin). Vite configs that import workspace
 TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve extensionless TS imports.
 
 ## How plugins work (do not break these)
@@ -75,13 +80,20 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
   narrowed per model.
 - `GET /api/schema` returns `{ models, vars, i18n }`. `tests/fixtures/post-schema.json` is real output of
   `toAdminSchema`, kept as the parser's test data.
-- Query keys nest by model so one `invalidateQueries({ queryKey: ["model", prefix] })` covers lists and records.
+- Query keys nest by model so one `invalidateQueries({ queryKey: ["model", prefix] })` covers lists and records. Query
+  and mutation options are factories taking the axios client (and a `QueryClient` for mutations, which refresh their own
+  model or group when they succeed).
+- Ids are plain strings (a UUID v7 from the SQL adapters, a bare id from SurrealDB); never cut or rewrite them.
+- A failed request is read with `toApiError(error)`: `{ status, message, fields }`, with `fields` keyed by the dotted
+  path of the form field (422 validation errors and 409 unique violations).
 
 ## The schema
 
 `packages/src/sdk/schema/schema.ts` is the old admin's `lib/schema.ts` (its owner's core code), checked by Biome like the
 rest. The server's JSON schema becomes **one zod schema** (`z.fromJSONSchema`, then `transformSchema`), and the form, the
-defaults and the validation all come from that one schema, 1:1 with the backend. Never add a second representation (a
+defaults and the validation all come from that one schema, 1:1 with the backend. `getSchema` returns, for each model and
+settings group, `{ ...item, form, schema }`: `form` (from `toForm`) lists the inputs to draw, `schema` is what
+`getDefaultValues` reads the defaults from and what validates the form. Never add a second representation (a
 field list, a hand-written validator) next to it. Fixing it is fine, but keep the change small, explain it, and test it
 against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAdminSchema` in njin core).
 
@@ -95,5 +107,5 @@ against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAd
 - Change njin core from here without being asked. Core changes (the manifest endpoint, serving plugin files,
   building local plugins) are tracked in `PLAN.md` and wait on the auth work.
 - Commit, push or change git config unless asked. `core.autocrlf` is `false` for this repo on purpose.
-- Add UI kit components or commit to a visual style yet: the visual direction is undecided, and the values in
-  `theme.css` are placeholders.
+- Add UI kit components (`./ui`) without asking: the tokens in `theme.css` have their first values and a dark set, but
+  the visual direction and the kit are not decided.

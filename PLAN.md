@@ -11,15 +11,20 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] CSS plugin: Tailwind terpisah per plugin, token dibaca sebagai variabel CSS dari admin
       (`theme.css` dengan `@theme static`, `plugin.css` untuk plugin).
 - [x] API bertipe dengan axios: model (CRUD, draft, i18n), vars, `queryOptions`.
-- [x] `/api/schema` diparse jadi `Field[]` (`getSchema`, `schemaQuery`); core njin sudah mengirim `{ models, vars, i18n }`.
+- [x] `/api/schema` jadi satu schema zod per model dan grup vars (`getSchema`, `schemaQuery`); core njin sudah mengirim
+      `{ models, vars, i18n }`.
 - [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
-- [x] Biome, git, 50 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Shell: layout dengan sidebar dari `navs`, judul halaman, token desain pertama dan mode gelap lewat
+      `prefers-color-scheme` (`app/src/components/shell.tsx`, `theme.css`).
+- [x] Biome, 73 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Repo di GitHub (`njinlabs/njin-admin`, public), `LICENSE`, dan CI (biome, typecheck, tes, build admin).
 
 ## Belum terbukti
 
-- [ ] Menjalankan admin di browser sungguhan: "Reports" tampil, tombolnya bereaksi (hook dari React bersama),
-      `Link` berpindah halaman, tombol berwarna dari token. Tes baru membuktikannya di bun.
-- [ ] Dark mode lewat penggantian variabel token tanpa membuild ulang plugin.
+- [x] Admin di browser sungguhan: halaman plugin tampil, tombolnya bereaksi (hook dari React bersama), `Link`
+      berpindah halaman, tombol berwarna dari token. Sudah dicoba pemilik repo.
+- [ ] Dark mode untuk plugin: set gelap token sudah ada di `theme.css`; plugin seharusnya ikut tanpa dibuild ulang,
+      tapi belum dilihat di browser.
 
 ## 1. Lapisan data admin
 
@@ -32,6 +37,8 @@ Murni logika, tidak butuh UI, dan dipakai semua halaman nanti.
 - [x] **Dua celah di `schema.ts` lama ditutup**: kolom `nullable` (union tanpa meta dari `anyOf [X, null]`) dan
       `minItems`/`maxItems` (array dibangun ulang tanpa aturan panjangnya). Perbaikan kecil di `unwrap` dan `transformType`,
       dengan tes terhadap schema asli server.
+- [ ] **Sambungkan ke form** (dikerjakan bersama halaman form): `getDefaultValues(model.schema)` untuk nilai awal,
+      `model.schema` sebagai validator form, `toApiError(...).fields` untuk menampilkan error server per field.
 - [x] **Normalisasi error API**: `toApiError` (pesan, status, error per field dari 422 dan 409).
 - [x] **Endpoint yang belum dibungkus**: file (`uploadFile`), analytics (`getAnalytics`), setup. Users dan daftar/hapus file
       memakai `modelApi(client, "user")` / `modelApi(client, "file")`.
@@ -43,10 +50,11 @@ Murni logika, tidak butuh UI, dan dipakai semua halaman nanti.
 Fitur bawaan ditulis sebagai plugin internal dengan kontrak yang sama dengan plugin pihak ketiga, supaya kontraknya
 teruji sendiri.
 
-- [ ] **Shell**: layout dengan sidebar dari `navs` (via `Link`), `loadSchema` diganti `useQuery(schemaQuery)`
-      dan sidebar membaca hasilnya. Loading dan error jadi state.
+- [x] **Shell**: layout dengan sidebar dari `navs` (via `Link`) dan judul halaman.
+- [ ] **Sidebar dari query**: `loadSchema` diganti `useQuery(schemaQuery)` dan sidebar membaca hasilnya. Loading dan
+      error jadi state (sekarang `loadSchema` jalan sekali sebelum render dan ditelan bila gagal).
 - [ ] **Content** (dikerjakan pertama): daftar record per model (TanStack Table, cari, urut, filter, paginasi),
-      form buat/ubah dari `Field[]`, hapus, draft/publish, i18n per bahasa.
+      form buat/ubah dari `model.form` dan `model.schema`, hapus, draft/publish, i18n per bahasa.
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
 - [ ] **Files**: pustaka berkas dan unggah.
 - [ ] **Users**.
@@ -70,7 +78,8 @@ Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pi
 
 Menunggu keputusan arah visual; urutan di atas tidak bergantung padanya.
 
-- [ ] **Putuskan arah visual**. Nilai token di `theme.css` sekarang placeholder.
+- [ ] **Putuskan arah visual**. Token di `theme.css` sudah punya nilai pertama (palet abu-abu/ungu) dan set gelap,
+      tapi belum ada keputusan akhir dan belum ada kit UI.
 - [ ] Isi `packages/src/ui/` dan tambah export `./ui`: komponen headless (Base UI) dengan gaya sendiri.
 - [ ] Token final, mode gelap, dan dokumentasinya.
 
@@ -99,16 +108,16 @@ Pekerjaan di repo `njin`. Menunggu auth kolega masuk supaya tidak bentrok.
 ## 7. Tooling dan rilis
 
 - [ ] `.gitattributes` (`* text=auto eol=lf`).
-- [ ] CI: typecheck, lint, tes.
+- [x] CI: biome, typecheck, tes, dan build admin (`.github/workflows/ci.yml`), lulus di `main`.
+- [x] `LICENSE` (MIT, sama dengan core).
 - [ ] Rilis `@njinlabs/njin-admin` ke npm (alur seperti njin: GitHub Release lalu npm, dist-tag beta dulu).
 - [ ] Dokumentasi untuk penulis plugin (cara membuat, membuild, CSS, API yang tersedia).
-- [ ] Remote git dan push.
+- [x] Remote git dan push (`github.com/njinlabs/njin-admin`).
 
 ## Urutan yang disarankan
 
-1. Cek di browser (bagian "Belum terbukti").
-2. Lapisan data (1), karena murni dan tidak menunggu siapa pun.
-3. Shell lalu Content (2), dengan UI kasar dulu.
+1. ~~Cek di browser~~ dan ~~lapisan data (1)~~: selesai.
+2. Sidebar dari `useQuery(schemaQuery)`, lalu Content (2): daftar record dan form dari `model.form`/`model.schema`.
 4. Kontrak plugin (3) sebelum plugin pihak ketiga pertama.
 5. Integrasi core (6) dan auth (5) begitu kode kolega masuk.
 6. Settings, Files, Users, Analytics.
@@ -122,3 +131,6 @@ Pekerjaan di repo `njin`. Menunggu auth kolega masuk supaya tidak bentrok.
 - `@theme static` di `theme.css` wajib: tanpanya Tailwind hanya menulis token yang dipakai halaman admin sendiri,
   dan token yang hanya dipakai plugin tidak akan ada.
 - Rute dan tautan ke halaman plugin/model tidak diperiksa tipenya, karena path-nya baru diketahui saat runtime.
+- `schema.ts` adalah `lib/schema.ts` lama (inti admin), kini dengan perbaikan untuk kolom `nullable`, `minItems`/`maxItems`,
+  dan id yang mengandung `:`. Perubahan lain pada berkas itu harus kecil, dijelaskan, dan diuji dengan schema asli server
+  (`tests/fixtures/*-schema.json`).
