@@ -42,6 +42,9 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
 - `exposeShared` takes `Record<SharedModule, unknown>`: adding to `sharedModules` fails to compile until `app/src/main.tsx`
   provides it. Add the new module's types/peer dependency too.
 - A plugin is always built in production mode with the production JSX runtime (the admin only shares that one).
+- A plugin's stylesheet is `@import "@njinlabs/njin-admin/plugin.css";` plus `@source "./";` (the folder with its
+  files). `plugin.css` turns off Tailwind's own source detection on purpose: left alone it scans the whole project it
+  runs in, and the plugin's CSS would carry every class the site uses (41 kB instead of 1 kB in the playground).
 - Plugin CSS reads the admin's tokens as `var(--color-*)`; it does not copy them. `theme.css` uses `@theme static`
   on purpose: without it Tailwind only writes the tokens the admin's own pages use. Token names are a contract with
   plugins, so do not rename them casually.

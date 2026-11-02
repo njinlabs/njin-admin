@@ -56,7 +56,8 @@ Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pi
       halaman di bawah `/content/<prefix>`, aksi tambahan di daftar record.
 - [ ] **Versi kontrak**: manifest membawa versi sdk, loader menolak plugin yang tidak cocok dengan pesan jelas.
 - [ ] **Versi modul bersama**: plugin dibuild terhadap React/Router versi tertentu; tentukan aturan dan cek.
-- [ ] **Panduan CSS untuk plugin**: kelas buatan sendiri diberi awalan, hanya memakai token yang ada,
+- [ ] **Panduan CSS untuk plugin**: wajib `@source` ke folder plugin sendiri (lihat `plugin.css`), kelas buatan sendiri
+      diberi awalan, hanya memakai token yang ada,
       daftar token yang stabil (nama token adalah kontrak).
 - [ ] Mem-bundle tipe untuk penulis plugin (apa yang diimpor dari `@njinlabs/njin-admin/sdk`).
 

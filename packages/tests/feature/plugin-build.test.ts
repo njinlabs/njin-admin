@@ -25,7 +25,7 @@ beforeAll(async () => {
     root: plugin,
     configFile: false,
     logLevel: "silent",
-    ...adminPluginConfig({ entry: "index.tsx", outDir }),
+    ...adminPluginConfig({ entry: "src/index.tsx", outDir }),
   });
   built = join(outDir, "index.js");
 });

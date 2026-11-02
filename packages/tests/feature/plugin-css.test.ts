@@ -18,7 +18,7 @@ beforeAll(async () => {
     root: join(root, "packages/tests/fixtures/plugin"),
     configFile: false,
     logLevel: "silent",
-    ...adminPluginConfig({ entry: "index.tsx", outDir }),
+    ...adminPluginConfig({ entry: "src/index.tsx", outDir }),
   });
   pluginCss = await Bun.file(join(outDir, "index.css")).text();
 
@@ -43,6 +43,10 @@ describe("a plugin's stylesheet", () => {
     expect(pluginCss).toContain(".p-4");
     // Only what is used: no utility the plugin never wrote.
     expect(pluginCss).not.toContain(".bg-primary-foreground");
+  });
+
+  test("only scans where the plugin points @source, not the project it sits in", () => {
+    expect(pluginCss).not.toContain(".bg-danger");
   });
 
   test("reads the admin's tokens as variables, with the admin's value as fallback", () => {
