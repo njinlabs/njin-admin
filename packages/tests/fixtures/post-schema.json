@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "label": "Title",
+      "unique": true,
+      "renderAs": "text",
+      "type": "string"
+    },
+    "slug": {
+      "label": "Slug",
+      "renderAs": "text",
+      "type": "string"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "label": "Note",
+          "renderAs": "text",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "views": {
+      "default": 0,
+      "type": "number",
+      "label": "Views",
+      "renderAs": "numeric"
+    },
+    "email": {
+      "label": "Email",
+      "renderAs": "text",
+      "type": "string",
+      "format": "email",
+      "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+    },
+    "body": {
+      "label": "Body",
+      "renderAs": "richtext",
+      "type": "string"
+    },
+    "on": {
+      "type": "boolean",
+      "label": "On",
+      "renderAs": "boolean"
+    },
+    "when": {
+      "label": "When",
+      "renderAs": "datepicker",
+      "type": "string"
+    },
+    "status": {
+      "default": "a",
+      "type": "string",
+      "enum": [
+        "a",
+        "b"
+      ],
+      "label": "Status",
+      "renderAs": "select"
+    },
+    "tag": {
+      "label": "Tag",
+      "labelKey": "name",
+      "renderAs": "relation",
+      "model": "tag",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": {}
+    },
+    "tags": {
+      "label": "Tags",
+      "renderAs": "multi_relation",
+      "model": "tag",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cover": {
+      "label": "Cover",
+      "renderAs": "file",
+      "model": "file",
+      "type": "string"
+    },
+    "gallery": {
+      "label": "Gallery",
+      "renderAs": "multi_file",
+      "model": "file",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "links": {
+      "label": "Links",
+      "renderAs": "array",
+      "type": "array",
+      "items": {
+        "label": "Link",
+        "renderAs": "text",
+        "type": "string"
+      }
+    },
+    "seo": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "label": "T",
+          "renderAs": "text",
+          "type": "string"
+        },
+        "tags": {
+          "label": "Tags",
+          "renderAs": "array",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "k": {
+                "label": "K",
+                "renderAs": "text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "k"
+            ],
+            "additionalProperties": false,
+            "label": "Row",
+            "renderAs": "object"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "tags"
+      ],
+      "additionalProperties": false,
+      "label": "SEO",
+      "renderAs": "object"
+    }
+  },
+  "required": [
+    "title",
+    "note",
+    "views",
+    "email",
+    "body",
+    "on",
+    "when",
+    "status",
+    "tag",
+    "tags",
+    "cover",
+    "gallery",
+    "links",
+    "seo"
+  ],
+  "additionalProperties": false
+}

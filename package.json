@@ -1,0 +1,25 @@
+{
+  "name": "njin-admin",
+  "private": true,
+  "description": "Admin panel for njin: the app, the SDK plugins are written with, and example plugins.",
+  "type": "module",
+  "workspaces": [
+    "app",
+    "packages",
+    "playground/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter @njinlabs/njin-admin-app dev",
+    "build": "bun run --filter @njinlabs/njin-admin-app build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13",
+    "@types/bun": "^1.4.4",
+    "typescript": "^7"
+  }
+}

@@ -1,0 +1,10 @@
+/* What a plugin's stylesheet starts from:  @import "@njinlabs/njin-admin/plugin.css";
+
+   Tailwind's utilities are built for the plugin's own classes, but the theme (Tailwind's and
+   the admin's tokens) is only a reference: the classes read var(--color-primary) and the like,
+   and the admin, already on the page, supplies the values. No preflight either, the admin has
+   it. The layer order is the admin's, so the plugin's utilities sort the same as its own. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" reference;
+@import "./theme.css" reference;
+@import "tailwindcss/utilities.css" layer(utilities);

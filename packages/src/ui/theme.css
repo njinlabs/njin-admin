@@ -1,0 +1,16 @@
+/* The design tokens of the admin. Plugins read these as CSS variables, so a plugin follows
+   the admin's look (and its dark mode) without carrying a copy. `static` makes the admin
+   always write them out; by default Tailwind only writes the ones its own pages use, and a
+   token only a plugin uses would be undefined. The values are placeholders until the visual
+   direction is decided. */
+@theme static {
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+  --color-danger: #dc2626;
+  --radius-control: 0.5rem;
+}
