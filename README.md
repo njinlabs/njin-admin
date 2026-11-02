@@ -22,8 +22,20 @@ bun run dev   # http://localhost:5173/_admin/
 `/api` and `/uploads` are forwarded to the njin server (`VITE_API_URL`, default
 `http://localhost:3000`).
 
-Plugins are listed by the njin server at `GET /api/admin/manifest` (not built in core yet). Until it is, the admin
-starts with no plugins.
+Until njin serves a plugin manifest, the app looks for a mock one at `app/public/mock/manifest.json`. It is
+not in the repo; without it the admin starts with no plugins. A plugin built into
+`app/public/mock/plugins/<name>/` and listed in that manifest as `{ "name", "entry", "styles" }` is loaded in dev.
+
+### Playground (optional, local)
+
+`playground/` is gitignored, as in njin core: a scratch place for example plugins. It is not a workspace; it
+has its own `package.json` and installs the library with a link:
+
+```bash
+(cd packages && bun link)                                        # once
+cd playground/reports && bun install                             # depends on "@njinlabs/njin-admin": "link:@njinlabs/njin-admin"
+bun run build                                                    # builds into app/public/mock/plugins/reports
+```
 
 ## Check
 

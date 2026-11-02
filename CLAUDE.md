@@ -13,7 +13,9 @@ layout and how to run it.
   - `./vite`: `adminPluginConfig`, the preset that builds a plugin.
   - `./theme.css`, `./plugin.css`: design tokens and a plugin's Tailwind entry (files live in `src/ui/`).
 - `playground/` and `app/public/mock/`: local only and gitignored, like `playground/` in njin core. They are a
-  scratch place for example plugins and the mock manifest. Nothing in the repo may depend on them.
+  scratch place for example plugins and the mock manifest. Nothing in the repo may depend on them. `playground/` is
+  not a workspace: each plugin in it has its own `package.json` and `bun.lock` and uses
+  `"@njinlabs/njin-admin": "link:@njinlabs/njin-admin"` (run `bun link` in `packages/` once), as in core.
 - Tests: `packages/tests/{unit,feature,fixtures}` and `app/tests/unit`. The plugin the feature tests build lives in
   `packages/tests/fixtures/plugin`.
 

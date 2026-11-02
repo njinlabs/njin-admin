@@ -5,8 +5,7 @@
   "type": "module",
   "workspaces": [
     "app",
-    "packages",
-    "playground/*"
+    "packages"
   ],
   "scripts": {
     "dev": "bun run --filter @njinlabs/njin-admin-app dev",
