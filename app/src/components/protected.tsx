@@ -4,7 +4,6 @@ import { Navigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { client } from "../lib/client";
-import { loadSchema } from "../lib/registry";
 import { Shell } from "./shell";
 
 // The pages behind the login. The token is checked with the server before anything is shown; a
@@ -13,15 +12,11 @@ export const Protected = () => {
   const [cookies, , removeCookie] = useCookies(["token"]);
   const token: string | undefined = cookies.token;
 
-  const { isError, isSuccess } = useQuery({
+  const { data: user, isError } = useQuery({
     queryKey: ["token", token],
     queryFn: async () => {
       client.defaults.headers.common.Authorization = `Bearer ${token}`;
-      const user = await checkToken(client);
-      // The menu comes from the schema, which needs the session.
-      await loadSchema().catch(console.error);
-
-      return user;
+      return checkToken(client);
     },
     enabled: !!token,
     retry: false,
@@ -35,7 +30,7 @@ export const Protected = () => {
   }, [token, isError, removeCookie]);
 
   if (!token) return <Navigate to="/login" />;
-  if (!isSuccess) return null;
+  if (!user) return null;
 
-  return <Shell />;
+  return <Shell user={user} />;
 };

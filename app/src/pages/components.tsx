@@ -1,6 +1,7 @@
 import {
   Button,
   Calendar,
+  ConfirmDialog,
   DatePicker,
   Field,
   FieldDescription,
@@ -8,6 +9,7 @@ import {
   FieldLabel,
   Input,
   Select,
+  Skeleton,
   Switch,
 } from "@njinlabs/njin-admin/ui";
 import { type ReactNode, useState } from "react";
@@ -43,6 +45,7 @@ export const ComponentsPage = () => {
   const [published, setPublished] = useState(true);
   const [invalidOn, setInvalidOn] = useState(false);
   const [date, setDate] = useState<string | undefined>();
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -67,6 +70,7 @@ export const ComponentsPage = () => {
             <Button variant="outline">Outline</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="danger">Danger</Button>
+            <Button variant="danger-ghost">Danger ghost</Button>
             <Button disabled>Disabled</Button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -101,6 +105,29 @@ export const ComponentsPage = () => {
               errors={[{ message: "Must be at least 8 characters" }]}
             />
           </Field>
+        </div>
+      </Section>
+
+      <Section title="ConfirmDialog">
+        <Button variant="danger" onClick={() => setConfirming(true)}>
+          Delete something
+        </Button>
+        <ConfirmDialog
+          open={confirming}
+          onOpenChange={setConfirming}
+          title="Delete this?"
+          description="This cannot be undone."
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={() => setConfirming(false)}
+        />
+      </Section>
+
+      <Section title="Skeleton">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-1/3" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="size-10 rounded-full" />
         </div>
       </Section>
 

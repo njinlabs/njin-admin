@@ -11,6 +11,7 @@ const button = cva(
         outline: "border bg-background hover:bg-subtle",
         ghost: "hover:bg-subtle",
         danger: "bg-danger text-white hover:bg-danger/90",
+        "danger-ghost": "text-danger hover:bg-danger/10",
       },
       size: {
         default: "h-9 px-4",

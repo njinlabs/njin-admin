@@ -16,7 +16,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
 - [x] Shell: layout dengan sidebar dari `navs`, judul halaman, token desain pertama dan mode gelap lewat
       `prefers-color-scheme` (`app/src/components/shell.tsx`, `theme.css`).
-- [x] Biome, 93 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Biome, 98 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
 - [x] Repo di GitHub (`njinlabs/njin-admin`, public), `LICENSE`, dan CI (biome, typecheck, tes, build admin).
 
 ## Belum terbukti
@@ -51,8 +51,11 @@ Fitur bawaan ditulis sebagai plugin internal dengan kontrak yang sama dengan plu
 teruji sendiri.
 
 - [x] **Shell**: layout dengan sidebar dari `navs` (via `Link`) dan judul halaman.
-- [ ] **Sidebar dari query**: `loadSchema` diganti `useQuery(schemaQuery)` dan sidebar membaca hasilnya. Loading dan
-      error jadi state (sekarang `loadSchema` jalan sekali sebelum render dan ditelan bila gagal).
+- [x] **Sidebar dari query**: `Shell` memakai `useQuery(schemaQuery)`, menu Content dan Settings dibangun `schemaNavs`.
+      Loading tampil sebagai `Skeleton`, gagal tampil pesan dengan tombol coba lagi. `loadSchema` dan array global
+      `navs.models`/`navs.vars` sudah dihapus. Route placeholder `/content/$prefix` dan `/settings/$prefix` ada sampai
+      halamannya dikerjakan.
+- [x] **Menu user** di kaki sidebar: nama dan email dari `check-token`, klik membuka menu (sementara hanya "Sign out").
 - [ ] **Content** (dikerjakan pertama): daftar record per model (TanStack Table, cari, urut, filter, paginasi),
       form buat/ubah dari `model.form` dan `model.schema`, hapus, draft/publish, i18n per bahasa.
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
@@ -82,13 +85,15 @@ Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
       700 di mode terang, 400 di mode gelap. Token lain (abu-abu, `danger`) masih nilai pertama.
 - [x] **Kit di `packages/src/ui/`, export `./ui`** (Base UI, hanya token, dibagi ke plugin lewat `sharedModules`):
       `Button`, `Field`/`FieldLabel`/`FieldDescription`/`FieldError`, `Input`, `Switch`, `Select`, `Popover`,
-      `Calendar` (react-day-picker), `DatePicker`. Halaman `/components` di admin untuk melihatnya.
-- [ ] Belum dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, mode gelap kit.
+      `Calendar` (react-day-picker), `DatePicker`, `Skeleton`, `ConfirmDialog` (AlertDialog Base UI, versi sempit dari
+      `Dialog`), dan varian `danger-ghost` pada `Button`. Halaman `/components` di admin untuk melihatnya.
+- [ ] Belum dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, `ConfirmDialog`, popover menu user,
+      mode gelap kit.
 - [ ] **Yang tidak butuh API**, urutan: `RenderForm` (text, email, numeric, boolean, select, datepicker, object, array;
       butuh `react-hook-form` dan `react-number-format`), lalu `RichTextEditor` (TipTap).
-- [ ] **Yang butuh API (ditunda)**: `Combobox` untuk relation/multi_relation, `Dialog` dan pemilih file
+- [ ] **Yang butuh API (ditunda)**: `Combobox` untuk relation/multi_relation, `Dialog` umum dan pemilih file
       (`file`/`multi_file`), lalu bagian relation dan file di `RenderForm`.
-- [ ] Komponen halaman (tabel data, paginasi, dialog konfirmasi, toast) saat halaman yang memakainya dikerjakan.
+- [ ] Komponen halaman (tabel data, paginasi, toast) saat halaman yang memakainya dikerjakan.
 - [ ] Token final dan dokumentasi kit untuk penulis plugin.
 
 ## 5. Auth dan sesi
@@ -101,9 +106,10 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
 - [x] Token di cookie `token` (`react-cookie`, path `/`, 30 hari seperti sesi server). `Protected` memeriksanya lewat
       `check-token`, memasang header `Authorization`, memuat schema, dan membuang token yang ditolak. `Root` mengarahkan
       semua halaman ke `/setup` sampai admin pertama ada.
-- [x] `loadSchema` hanya jalan setelah sesi diperiksa (di `Protected`, bukan lagi saat start).
-- [ ] Belum dicoba di browser, termasuk login dan setup sampai dashboard.
-- [ ] Logout: tombol di shell (`logout` sudah ada di sdk), hapus cookie dan header.
+- [x] Schema dimuat setelah sesi diperiksa: `Shell` baru dirender setelah `Protected` memasang header `Authorization`.
+- [x] Login sudah dicoba di browser. Setup sampai dashboard belum.
+- [x] Logout: menu user di sidebar, dengan `ConfirmDialog`. Memanggil `logout`, menghapus cookie, header, dan cache
+      `["schema"]`/`["model"]` (cache per sesi harus dibersihkan di sini juga bila bertambah). Belum dicoba di browser.
 - [ ] 401 di tengah sesi: sekarang baru ketahuan saat halaman dibuka ulang; tangani secara global.
 - [ ] Cookie `HttpOnly` dari server: login mengirim `Set-Cookie`, server membaca cookie, ada perlindungan CSRF. Pekerjaan
       di core. Cookie sekarang ditulis script (server mengirim token di JSON), jadi bisa dibaca script lain di halaman,
@@ -138,9 +144,10 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 ## Urutan yang disarankan
 
 1. ~~Cek di browser~~ dan ~~lapisan data (1)~~: selesai.
-2. Sidebar dari `useQuery(schemaQuery)`, lalu Content (2): daftar record dan form dari `model.form`/`model.schema`.
+2. ~~Sidebar dari `useQuery(schemaQuery)`~~: selesai. Lanjut Content (2): daftar record dan form dari
+   `model.form`/`model.schema`.
 4. Kontrak plugin (3) sebelum plugin pihak ketiga pertama.
-5. Integrasi core (6) dan sisa auth (5): logout, 401, izin.
+5. Integrasi core (6) dan sisa auth (5): 401, izin.
 6. Settings, Files, Users, Analytics.
 7. Kit UI (4) berjalan paralel: `RenderForm` dan `RichTextEditor` dulu; komponen yang butuh API menyusul.
 

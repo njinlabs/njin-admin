@@ -2,11 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { renderToString } from "react-dom/server";
 import {
   Button,
+  ConfirmDialog,
   cn,
   Field,
   FieldError,
   FieldLabel,
   Input,
+  Skeleton,
 } from "../../../src/ui";
 
 describe("cn", () => {
@@ -69,5 +71,41 @@ describe("Input", () => {
     );
 
     expect(html).toContain("data-invalid");
+  });
+});
+
+describe("Skeleton", () => {
+  test("is hidden from assistive tech and takes the caller's size", () => {
+    const html = renderToString(<Skeleton className="h-4 w-1/2" />);
+
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain("animate-pulse");
+    expect(html).toContain("h-4 w-1/2");
+  });
+});
+
+describe("ConfirmDialog", () => {
+  const dialog = (open: boolean) =>
+    renderToString(
+      <ConfirmDialog
+        open={open}
+        onOpenChange={() => {}}
+        title="Sign out?"
+        confirmLabel="Yes"
+        onConfirm={() => {}}
+      />,
+    );
+
+  test("renders nothing while closed", () => {
+    expect(dialog(false)).not.toContain("Sign out?");
+  });
+});
+
+describe("Button danger-ghost", () => {
+  test("is red text without a fill", () => {
+    const html = renderToString(<Button variant="danger-ghost">Out</Button>);
+
+    expect(html).toContain("text-danger");
+    expect(html).not.toContain("bg-danger ");
   });
 });

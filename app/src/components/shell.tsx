@@ -1,24 +1,28 @@
-import type { NavEntry } from "@njinlabs/njin-admin/sdk";
+import { type NavEntry, type Row, schemaQuery } from "@njinlabs/njin-admin/sdk";
+import { Button, Skeleton } from "@njinlabs/njin-admin/ui";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { PiList, PiX } from "react-icons/pi";
-import { navs } from "../lib/registry";
+import { client } from "../lib/client";
+import { navs, schemaNavs } from "../lib/registry";
+import { UserMenu } from "./user-menu";
 
-const sections = [
-  { title: null, entries: () => navs.main },
-  { title: "Content", entries: () => navs.models },
-  { title: "Settings", entries: () => navs.vars },
-  { title: "Plugins", entries: () => navs.plugins },
-];
+type Section = {
+  title: string | null;
+  entries: NavEntry[];
+  // The schema decides Content and Settings, so those can still be loading or have failed.
+  status?: "pending" | "error";
+};
 
 // The title of the page is the label of the menu entry that owns the path; the longest match
 // wins so "/reports/42" still reads "Reports".
-const useTitle = () => {
+const useTitle = (sections: Section[]) => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const path = pathname.replace(/^\/_admin/, "") || "/";
 
   return sections
-    .flatMap(({ entries }) => entries())
+    .flatMap(({ entries }) => entries)
     .filter(({ to }) => (to === "/" ? path === "/" : path.startsWith(to)))
     .sort((a, b) => b.to.length - a.to.length)[0]?.label;
 };
@@ -44,18 +48,49 @@ const NavItem = ({
   </Link>
 );
 
-const Nav = ({ onNavigate }: { onNavigate: () => void }) => (
+const widths = ["w-3/4", "w-2/3", "w-5/6"];
+
+const NavSkeleton = () => (
+  <div className="flex flex-col gap-1" role="status" aria-label="Loading menu">
+    {widths.map((width) => (
+      <div key={width} className="flex items-center gap-3 px-3 py-2">
+        <Skeleton className="size-5 shrink-0" />
+        <Skeleton className={`h-5 ${width}`} />
+      </div>
+    ))}
+  </div>
+);
+
+const NavError = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="flex flex-col items-start gap-2 px-3 text-sm text-muted-foreground">
+    <p>The menu could not be loaded.</p>
+    <Button size="sm" variant="outline" onClick={onRetry}>
+      Try again
+    </Button>
+  </div>
+);
+
+const Nav = ({
+  sections,
+  onNavigate,
+  onRetry,
+}: {
+  sections: Section[];
+  onNavigate: () => void;
+  onRetry: () => void;
+}) => (
   <nav className="flex flex-col gap-5 p-3">
-    {sections.map(({ title, entries }) => {
-      const items = entries();
-      if (items.length === 0) return null;
+    {sections.map(({ title, entries, status }) => {
+      if (!status && entries.length === 0) return null;
 
       return (
         <div key={title ?? "main"} className="flex flex-col gap-1">
           {title && (
             <p className="px-3 pb-1 text-sm text-muted-foreground">{title}</p>
           )}
-          {items.map((entry) => (
+          {status === "pending" && <NavSkeleton />}
+          {status === "error" && <NavError onRetry={onRetry} />}
+          {entries.map((entry) => (
             <NavItem key={entry.to} {...entry} onNavigate={onNavigate} />
           ))}
         </div>
@@ -64,9 +99,27 @@ const Nav = ({ onNavigate }: { onNavigate: () => void }) => (
   </nav>
 );
 
-export const Shell = () => {
+export const Shell = ({ user }: { user: Row }) => {
   const [open, setOpen] = useState(false);
-  const title = useTitle();
+  const schema = useQuery(schemaQuery(client));
+  const { models, vars } = schemaNavs(schema.data ?? { models: [], vars: [] });
+  const status = schema.isPending
+    ? "pending"
+    : schema.isError
+      ? "error"
+      : undefined;
+  const sections: Section[] = [
+    { title: null, entries: navs.main },
+    { title: "Content", entries: models, status },
+    // One failure message is enough, so Settings stays hidden until the schema is back.
+    {
+      title: "Settings",
+      entries: vars,
+      status: status === "error" ? undefined : status,
+    },
+    { title: "Plugins", entries: navs.plugins },
+  ];
+  const title = useTitle(sections);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -83,19 +136,15 @@ export const Shell = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <Nav onNavigate={() => setOpen(false)} />
+          <Nav
+            sections={sections}
+            onNavigate={() => setOpen(false)}
+            onRetry={() => schema.refetch()}
+          />
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 border-t border-border p-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-full border border-border bg-subtle font-mono text-sm">
-            A
-          </div>
-          <div className="min-w-0 leading-tight">
-            <p className="truncate font-medium">Admin</p>
-            <p className="truncate text-sm text-muted-foreground">
-              admin@njin.dev
-            </p>
-          </div>
+        <div className="shrink-0 border-t border-border p-3">
+          <UserMenu user={user} />
         </div>
       </aside>
 

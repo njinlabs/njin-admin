@@ -2,8 +2,9 @@ import type {
   AdminPluginConfig,
   NavEntry,
   PluginRoute,
+  Schema,
 } from "@njinlabs/njin-admin/sdk";
-import { getManifest, getSchema } from "@njinlabs/njin-admin/sdk";
+import { getManifest } from "@njinlabs/njin-admin/sdk";
 import {
   PiFolderOpenDuotone,
   PiGearDuotone,
@@ -32,9 +33,7 @@ export const navs = {
       to: "/users",
     },
   ] as NavEntry[],
-  models: [] as NavEntry[],
   plugins: [] as NavEntry[],
-  vars: [] as NavEntry[],
 };
 
 const Dashboard = () => (
@@ -52,6 +51,8 @@ export const routes = {
     // Dummy pages until the real ones exist.
     { path: "/files", component: Dashboard },
     { path: "/users", component: Dashboard },
+    { path: "/content/$prefix", component: Dashboard },
+    { path: "/settings/$prefix", component: Dashboard },
     // Kit showcase; reachable by URL only, it is not a menu entry.
     { path: "/components", component: ComponentsPage },
   ] as PluginRoute[],
@@ -86,25 +87,18 @@ export const loadPlugins = async () => {
 };
 
 // Models and settings groups come from the server, so the menu follows what njin has registered.
-export const loadSchema = async () => {
-  const { models, vars } = await getSchema(client);
-
-  // Signing in again loads it again; the menu must not list everything twice.
-  navs.models.length = 0;
-  navs.vars.length = 0;
-
-  navs.models.push(
-    ...models.map((model) => ({
-      icon: () => <PiStackDuotone />,
-      label: model.name,
-      to: `/content/${model.prefix}`,
-    })),
-  );
-  navs.vars.push(
-    ...vars.map((group) => ({
-      icon: () => <PiGearDuotone />,
-      label: group.name,
-      to: `/settings/${group.prefix}`,
-    })),
-  );
-};
+export const schemaNavs = ({
+  models,
+  vars,
+}: Pick<Schema, "models" | "vars">) => ({
+  models: models.map((model) => ({
+    icon: () => <PiStackDuotone />,
+    label: model.name,
+    to: `/content/${model.prefix}`,
+  })) as NavEntry[],
+  vars: vars.map((group) => ({
+    icon: () => <PiGearDuotone />,
+    label: group.name,
+    to: `/settings/${group.prefix}`,
+  })) as NavEntry[],
+});

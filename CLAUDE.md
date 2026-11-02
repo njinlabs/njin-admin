@@ -102,9 +102,15 @@ The admin side, in `app/src`:
   `/`, 30 days. Always path `/`: a narrower one misses the page when the URL has no trailing slash. It is written by
   script, so it is not `HttpOnly`; that needs the server to set it (see `PLAN.md`, section 5).
 - `components/protected.tsx` guards the pages: no cookie goes to `/login`; otherwise it calls `check-token`, sets the
-  `Authorization` header on the client, loads the schema, and drops a token the server refuses. `components/root.tsx`
-  sends every page to `/setup` until the first admin exists. Tests replace both through the `root` and `layout`
-  options of `createAdminRouter`, since they ask the server.
+  `Authorization` header on the client and drops a token the server refuses; it hands the user from `check-token`
+  (`name`, `email`) to `Shell`. `components/root.tsx` sends every page to `/setup` until the first admin exists. Tests
+  replace both through the `root` and `layout` options of `createAdminRouter`, since they ask the server.
+- The menu's Content and Settings entries come from `useQuery(schemaQuery(client))` in `Shell` (`schemaNavs` in
+  `lib/registry.tsx` turns the schema into entries), not from a global array: they show skeletons while loading and a
+  retry on failure. `Shell` only mounts after the session is checked, so the `Authorization` header is already set.
+- Signing out is in `components/user-menu.tsx` (the user at the foot of the sidebar, behind a `ConfirmDialog`): it calls
+  `logout`, removes the cookie and the `["schema"]` and `["model"]` queries, and `Protected` then sends the page to
+  `/login` through the router. Anything cached per session must be cleared there too.
 - Pages before a session (login, setup) share `components/auth-layout.tsx` and `password-input.tsx`.
 - Do not store the token in `localStorage`, and do not reload the page to move between login and the admin: navigate
   with the router.
@@ -130,6 +136,9 @@ against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAd
 - One file per component, API kept flat and small (`Select` takes `options`, not compound parts). The kit knows nothing
   of react-hook-form: its inputs are controlled, and `FieldError` takes `errors={[fieldState.error]}` structurally.
   The glue from `Form` (the schema's field list) to the kit belongs in `RenderForm`.
+- Reach for the kit's component and its variants before writing classes by hand in the admin: a destructive menu item
+  is `Button variant="danger-ghost"`, not a `<button>` coloured with `text-danger`, so colours stay in one place.
+  `ConfirmDialog` is the yes/no before something is done; `Skeleton` is the loading placeholder.
 - No icon library in the package: the few icons a component needs are inline SVG.
 - The admin's Tailwind must see the kit's classes (`@source` in `app/src/index.css`: the package sits behind
   `node_modules`, where Tailwind does not look). A plugin's CSS does not carry the kit's classes, the admin's does.
