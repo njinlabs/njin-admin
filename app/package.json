@@ -13,6 +13,7 @@
     "@njinlabs/njin-admin": "workspace:*",
     "@tanstack/react-query": "^5.105.1",
     "@tanstack/react-router": "^1.170.46",
+    "@tanstack/react-table": "^8",
     "react": "^19.2.6",
     "react-cookie": "^8.1.2",
     "react-dom": "^19.2.6",

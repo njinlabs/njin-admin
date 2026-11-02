@@ -1,4 +1,5 @@
 import {
+  infiniteQueryOptions,
   mutationOptions,
   type QueryClient,
   queryOptions,
@@ -201,6 +202,22 @@ export const recordsQuery = <T extends Row = Row>(
   queryOptions({
     queryKey: ["model", prefix, "list", query],
     queryFn: () => readRecords<T>(client, prefix, query),
+  });
+
+// The same list read page after page, for useInfiniteQuery (infinite scroll). The page is the
+// query's own, so `query` leaves it out. Keyed under the model like the others.
+export const recordsInfiniteQuery = <T extends Row = Row>(
+  client: AxiosInstance,
+  prefix: string,
+  query?: Omit<ReadQuery, "page">,
+) =>
+  infiniteQueryOptions({
+    queryKey: ["model", prefix, "list", "infinite", query],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      readRecords<T>(client, prefix, { ...query, page: pageParam }),
+    getNextPageParam: ({ meta }) =>
+      meta.page < meta.pageCount ? meta.page + 1 : undefined,
   });
 
 export const recordQuery = <T extends Row = Row>(

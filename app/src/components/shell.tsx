@@ -6,6 +6,7 @@ import { useState } from "react";
 import { PiList, PiX } from "react-icons/pi";
 import { client } from "../lib/client";
 import { navs, schemaNavs } from "../lib/registry";
+import { HeaderSlot } from "./header-slot";
 import { UserMenu } from "./user-menu";
 
 type Section = {
@@ -15,16 +16,16 @@ type Section = {
   status?: "pending" | "error";
 };
 
-// The title of the page is the label of the menu entry that owns the path; the longest match
-// wins so "/reports/42" still reads "Reports".
-const useTitle = (sections: Section[]) => {
+// The page is the menu entry that owns the path (its label is the title, its icon the title's
+// icon); the longest match wins so "/reports/42" still reads "Reports".
+const useCurrent = (sections: Section[]) => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const path = pathname.replace(/^\/_admin/, "") || "/";
 
   return sections
     .flatMap(({ entries }) => entries)
     .filter(({ to }) => (to === "/" ? path === "/" : path.startsWith(to)))
-    .sort((a, b) => b.to.length - a.to.length)[0]?.label;
+    .sort((a, b) => b.to.length - a.to.length)[0];
 };
 
 const NavItem = ({
@@ -101,6 +102,7 @@ const Nav = ({
 
 export const Shell = ({ user }: { user: Row }) => {
   const [open, setOpen] = useState(false);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const schema = useQuery(schemaQuery(client));
   const { models, vars } = schemaNavs(schema.data ?? { models: [], vars: [] });
   const status = schema.isPending
@@ -119,7 +121,8 @@ export const Shell = ({ user }: { user: Row }) => {
     },
     { title: "Plugins", entries: navs.plugins },
   ];
-  const title = useTitle(sections);
+  const current = useCurrent(sections);
+  const Icon = current?.icon;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -148,8 +151,9 @@ export const Shell = ({ user }: { user: Row }) => {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-border bg-background px-4 md:px-8">
+      {/* One screen tall: the header stays, and the page below it scrolls (or lets a table scroll). */}
+      <main className="flex h-screen min-w-0 flex-1 flex-col">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4 md:px-8">
           <button
             type="button"
             aria-label="Toggle menu"
@@ -158,11 +162,24 @@ export const Shell = ({ user }: { user: Row }) => {
           >
             {open ? <PiX className="size-5" /> : <PiList className="size-5" />}
           </button>
-          <h1 className="text-lg font-semibold">{title}</h1>
+          {/* React hoists <title> into <head>, so the tab follows the page without a helmet library. */}
+          <title>{current ? `${current.label} · njin` : "njin"}</title>
+          <h1 className="flex min-w-0 items-center gap-3 text-lg font-semibold">
+            {Icon && (
+              <span className="grid size-8 shrink-0 place-items-center rounded-control border border-border bg-subtle text-primary [&>svg]:size-5">
+                <Icon />
+              </span>
+            )}
+            <span className="truncate">{current?.label}</span>
+          </h1>
+          <div ref={setSlot} className="ml-auto flex items-center gap-2" />
         </header>
-        <div className="mx-auto max-w-6xl px-4 py-6 md:px-8">
-          <Outlet />
-        </div>
+        <HeaderSlot value={slot}>
+          {/* Padded, unless the page holds something that runs edge to edge (a table marks itself with data-bleed). */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 has-[[data-bleed]]:p-0 md:px-8 md:has-[[data-bleed]]:p-0">
+            <Outlet />
+          </div>
+        </HeaderSlot>
       </main>
     </div>
   );

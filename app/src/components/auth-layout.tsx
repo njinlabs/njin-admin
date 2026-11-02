@@ -99,6 +99,7 @@ export const AuthLayout = ({
   children: ReactNode;
 }) => (
   <main className="grid min-h-screen lg:grid-cols-2">
+    <title>{`${title} · njin`}</title>
     <aside
       aria-hidden
       className="relative hidden overflow-hidden bg-primary lg:block"

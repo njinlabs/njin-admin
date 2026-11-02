@@ -7,6 +7,7 @@ import {
   modelApi,
   readRecords,
   recordQuery,
+  recordsInfiniteQuery,
   recordsQuery,
   removeLocaleMutation,
   toParams,
@@ -148,6 +149,31 @@ describe("query options", () => {
     ]);
     expect(await new QueryClient().fetchQuery(options)).toEqual(page);
     expect(uri()).toBe("/api/post?page=2");
+  });
+
+  test("recordsInfiniteQuery reads page after page until the last", async () => {
+    const meta = { total: 40, page: 1, limit: 20, pageCount: 2 };
+    const { client, uri } = capture({ data: [], meta });
+    const options = recordsInfiniteQuery(client, "post", { search: "a" });
+
+    expect(options.queryKey[0]).toBe("model");
+    expect(options.queryKey[1]).toBe("post");
+    const queryClient = new QueryClient();
+    const result = await queryClient.fetchInfiniteQuery({
+      ...options,
+      pages: 1,
+    });
+
+    expect(uri()).toBe("/api/post?search=a&page=1");
+    expect(options.getNextPageParam(result.pages[0]!, [], 1, [])).toBe(2);
+    expect(
+      options.getNextPageParam(
+        { data: [], meta: { ...meta, page: 2 } },
+        [],
+        2,
+        [],
+      ),
+    ).toBeUndefined();
   });
 
   test("recordQuery fetches one record", async () => {

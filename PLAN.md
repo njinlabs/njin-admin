@@ -56,8 +56,12 @@ teruji sendiri.
       `navs.models`/`navs.vars` sudah dihapus. Route placeholder `/content/$prefix` dan `/settings/$prefix` ada sampai
       halamannya dikerjakan.
 - [x] **Menu user** di kaki sidebar: nama dan email dari `check-token`, klik membuka menu (sementara hanya "Sign out").
-- [ ] **Content** (dikerjakan pertama): daftar record per model (TanStack Table, cari, urut, filter, paginasi),
-      form buat/ubah dari `model.form` dan `model.schema`, hapus, draft/publish, i18n per bahasa.
+- [x] **Content, daftar** (`pages/content-list.tsx`, `components/data-table.tsx`, `lib/cell.tsx`): TanStack Table v8 dengan
+      urut dan cari dari server (`manualSorting`, `recordsInfiniteQuery`), infinite scroll di dalam tabel yang memenuhi
+      area konten, kolom dari `model.form` (tipe skalar), hapus lewat `ConfirmDialog`. Search dan tombol New ada di
+      header Shell lewat `HeaderActions` (portal ke `HeaderSlot`). Belum dicoba di browser.
+- [ ] **Content, sisanya**: filter di daftar, tombol Buat/Ubah dan form dari `model.form` dan `model.schema`,
+      draft/publish, i18n per bahasa.
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
 - [ ] **Files**: pustaka berkas dan unggah.
 - [ ] **Users**.

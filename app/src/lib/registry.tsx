@@ -13,6 +13,7 @@ import {
   PiUsersDuotone,
 } from "react-icons/pi";
 import { ComponentsPage } from "../pages/components";
+import { ContentListPage } from "../pages/content-list";
 import { client } from "./client";
 
 export const navs = {
@@ -51,7 +52,7 @@ export const routes = {
     // Dummy pages until the real ones exist.
     { path: "/files", component: Dashboard },
     { path: "/users", component: Dashboard },
-    { path: "/content/$prefix", component: Dashboard },
+    { path: "/content/$prefix", component: ContentListPage },
     { path: "/settings/$prefix", component: Dashboard },
     // Kit showcase; reachable by URL only, it is not a menu entry.
     { path: "/components", component: ComponentsPage },
