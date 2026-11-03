@@ -29,8 +29,8 @@ export const ConfirmDialog = ({
 }: ConfirmDialogProps) => (
   <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
     <AlertDialog.Portal>
-      <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-foreground/40" />
-      <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-control border bg-background p-5 text-foreground shadow-md outline-none">
+      <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-foreground/40 transition-opacity duration-150 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+      <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-control border bg-background p-5 text-foreground shadow-md outline-none transition-[opacity,scale] duration-150 data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0">
         <AlertDialog.Title className="text-lg font-semibold">
           {title}
         </AlertDialog.Title>

@@ -37,11 +37,11 @@
     --color-background: #0d1117;
     --color-surface: #010409;
     --color-subtle: #161b22;
-    --color-foreground: #e6edf3;
+    --color-foreground: #f0f6fc;
     --color-muted: #161b22;
-    --color-muted-foreground: #7d8590;
-    --color-border: #30363d;
-    --color-primary: var(--color-primary-400);
+    --color-muted-foreground: #b1bac4;
+    --color-border: #3d444d;
+    --color-primary: var(--color-primary-300);
     --color-primary-foreground: #0d1117;
     --color-danger: #f85149;
   }

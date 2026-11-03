@@ -40,9 +40,10 @@ const NavItem = ({
     to={to as string}
     onClick={onNavigate}
     activeOptions={{ exact: to === "/" }}
-    className="flex items-center gap-3 rounded-control border border-transparent px-3 py-2 text-muted-foreground hover:bg-subtle hover:text-foreground [&>svg]:size-5 [&>svg]:shrink-0"
+    className="flex items-center gap-3 rounded-control border border-transparent px-3 py-2 text-muted-foreground not-data-[status=active]:hover:bg-subtle not-data-[status=active]:hover:text-foreground [&>svg]:size-5 [&>svg]:shrink-0"
     activeProps={{
-      className: "border-border bg-subtle text-foreground",
+      className:
+        "border-primary/40 bg-primary/10 font-semibold text-primary-900 dark:border-primary/50 dark:bg-primary/25 dark:text-primary",
     }}
   >
     <Icon />
