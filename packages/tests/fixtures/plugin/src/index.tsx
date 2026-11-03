@@ -1,4 +1,8 @@
-import { defineAdminPlugin } from "@njinlabs/njin-admin/sdk";
+import {
+  type FieldProps,
+  defineAdminPlugin,
+  useCan,
+} from "@njinlabs/njin-admin/sdk";
 import { Button } from "@njinlabs/njin-admin/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -26,7 +30,24 @@ const Reports = () => {
   );
 };
 
+// Reads the session through the sdk: it only sees the admin's provider if the sdk is the admin's.
+const Total = () => <p>{useCan("report", "read") ? "allowed" : "denied"}</p>;
+
+const Slug = ({ value, options }: FieldProps) => (
+  <input readOnly value={String(value ?? "")} data-from={String(options)} />
+);
+
 export default defineAdminPlugin({
-  navs: [{ icon: () => <PiChartBar />, label: "Reports", to: "/reports" }],
+  name: "reports",
+  navs: [
+    {
+      icon: () => <PiChartBar />,
+      label: "Reports",
+      to: "/reports",
+      requires: { resource: "report", action: "read" },
+    },
+  ],
   routes: [{ path: "/reports", component: Reports }],
+  widgets: [{ id: "total", title: "Total", component: Total }],
+  fields: { slugify: Slug },
 });

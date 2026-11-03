@@ -1,4 +1,8 @@
-import { checkToken, permissionsQuery } from "@njinlabs/njin-admin/sdk";
+import {
+  checkToken,
+  permissionsQuery,
+  SessionContext,
+} from "@njinlabs/njin-admin/sdk";
 import { Button } from "@njinlabs/njin-admin/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "@tanstack/react-router";
@@ -6,7 +10,6 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { client } from "../lib/client";
 import { clearSession, watchExpiry } from "../lib/session";
-import { SessionContext } from "./session";
 import { Shell } from "./shell";
 
 // The pages behind the login. The token is checked with the server before anything is shown; a
@@ -81,7 +84,7 @@ export const Protected = () => {
   if (!permissions.data) return null;
 
   return (
-    <SessionContext value={{ user, permissions: permissions.data }}>
+    <SessionContext value={{ user, permissions: permissions.data, client }}>
       <Shell user={user} />
     </SessionContext>
   );

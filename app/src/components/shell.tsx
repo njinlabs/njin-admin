@@ -1,4 +1,10 @@
-import { type NavEntry, type Row, schemaQuery } from "@njinlabs/njin-admin/sdk";
+import {
+  type NavEntry,
+  type Row,
+  schemaQuery,
+  useSession,
+  visible,
+} from "@njinlabs/njin-admin/sdk";
 import { Button, Skeleton } from "@njinlabs/njin-admin/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
@@ -7,7 +13,6 @@ import { PiList, PiX } from "react-icons/pi";
 import { client } from "../lib/client";
 import { mainNavs, navs, schemaNavs } from "../lib/registry";
 import { HeaderSlot, PageTitleContext, TitleSlot } from "./header-slot";
-import { useSession } from "./session";
 import { UserMenu } from "./user-menu";
 
 type Section = {
@@ -127,7 +132,7 @@ export const Shell = ({ user }: { user: Row }) => {
       entries: vars,
       status: status === "error" ? undefined : status,
     },
-    { title: "Plugins", entries: navs.plugins },
+    { title: "Plugins", entries: visible(navs.plugins, permissions) },
   ];
   const current = useCurrent(sections);
   const Icon = current?.icon;

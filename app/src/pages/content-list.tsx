@@ -3,6 +3,7 @@ import {
   type ModelSchema,
   type Row,
   schemaQuery,
+  useSession,
 } from "@njinlabs/njin-admin/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -11,7 +12,6 @@ import { useMemo } from "react";
 import { TableSkeleton } from "../components/data-table";
 import { StatusCell } from "../components/draft-status";
 import { ListError, RecordList } from "../components/record-list";
-import { useSession } from "../components/session";
 import { columnSize, isListable, renderCell } from "../lib/cell";
 import { client } from "../lib/client";
 import type { FilterField } from "../lib/filters";

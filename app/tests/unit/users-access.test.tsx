@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test";
-import type { Permissions } from "@njinlabs/njin-admin/sdk";
+import {
+  createClient,
+  type Permissions,
+  SessionContext,
+} from "@njinlabs/njin-admin/sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createMemoryHistory,
@@ -7,7 +11,6 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { renderToString } from "react-dom/server";
-import { SessionContext } from "../../src/components/session";
 import { createAdminRouter } from "../../src/lib/create-router";
 import { routes } from "../../src/lib/registry";
 
@@ -25,7 +28,9 @@ const visit = async (url: string, permissions: Permissions) => {
 
   return renderToString(
     <QueryClientProvider client={queryClient}>
-      <SessionContext value={{ user: { id: "u1" }, permissions }}>
+      <SessionContext
+        value={{ user: { id: "u1" }, permissions, client: createClient() }}
+      >
         <RouterProvider router={router} />
       </SessionContext>
     </QueryClientProvider>,

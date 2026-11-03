@@ -349,3 +349,39 @@ describe("localizedDefault", () => {
     expect(localizedDefault(schema, "missing")).toBeUndefined();
   });
 });
+
+describe("a field tagged by a plugin", () => {
+  // `plugin(text(), ["reports:slugify", { from: "title" }])` on the server only adds this to the
+  // field's JSON schema; the type underneath is the text's own.
+  const tagged = {
+    type: "object",
+    properties: {
+      slug: {
+        type: "string",
+        label: "Slug",
+        renderAs: "text",
+        plugin: ["reports:slugify", { from: "title" }],
+      },
+      title: { type: "string", label: "Title", renderAs: "text" },
+    },
+    required: ["slug", "title"],
+  };
+
+  test("is read as the name and the options, with the base type kept", () => {
+    const { form } = build(tagged);
+
+    expect(form[0]).toMatchObject({
+      key: "slug",
+      type: "text",
+      plugin: { name: "reports:slugify", options: { from: "title" } },
+    });
+    expect(form[1]?.plugin).toBeUndefined();
+  });
+
+  test("validates as the base type does", () => {
+    const { schema } = build(tagged);
+
+    expect(schema.safeParse({ slug: "a", title: "b" }).success).toBe(true);
+    expect(schema.safeParse({ slug: 1, title: "b" }).success).toBe(false);
+  });
+});

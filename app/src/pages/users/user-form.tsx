@@ -8,6 +8,7 @@ import {
   recordsQuery,
   toApiError,
   updateRecordMutation,
+  useSession,
 } from "@njinlabs/njin-admin/sdk";
 import {
   Button,
@@ -25,7 +26,6 @@ import z from "zod";
 import { FormSkeleton } from "../../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../../components/header-slot";
 import { PasswordInput } from "../../components/password-input";
-import { useSession } from "../../components/session";
 import { client } from "../../lib/client";
 import { idOf, LoadError, NoAccess } from "./shared";
 

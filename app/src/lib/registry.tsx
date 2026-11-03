@@ -1,11 +1,14 @@
 import type {
   AdminPluginConfig,
+  FieldProps,
   NavEntry,
   Permissions,
   PluginRoute,
   Schema,
+  Widget,
 } from "@njinlabs/njin-admin/sdk";
 import { can, canList, getManifest } from "@njinlabs/njin-admin/sdk";
+import type { FC } from "react";
 import {
   PiFolderOpenDuotone,
   PiGearDuotone,
@@ -16,6 +19,7 @@ import {
 import { ComponentsPage } from "../pages/components";
 import { ContentFormPage } from "../pages/content-form";
 import { ContentListPage } from "../pages/content-list";
+import { DashboardPage } from "../pages/dashboard";
 import { FilesPage } from "../pages/files";
 import { SettingsPage } from "../pages/settings";
 import { GroupFormPage } from "../pages/users/group-form";
@@ -45,18 +49,16 @@ export const navs = {
   plugins: [] as NavEntry[],
 };
 
-const Dashboard = () => (
-  <div className="space-y-4">
-    <div className="rounded-control border border-border bg-surface p-4 text-muted-foreground">
-      Nothing here yet.
-    </div>
-  </div>
-);
+// Tiles of the dashboard, all from plugins for now.
+export const widgets = { plugins: [] as Widget[] };
+
+// What plugins draw fields with, by "<plugin>:<renderer>".
+export const fieldRenderers: Record<string, FC<FieldProps>> = {};
 
 // The pages of the admin, in the order the router gets them: its own first, then the plugins'.
 export const routes = {
   main: [
-    { path: "/", component: Dashboard },
+    { path: "/", component: DashboardPage },
     { path: "/files", component: FilesPage },
     { path: "/users", component: UsersListPage },
     { path: "/users/new", component: UserFormPage },
@@ -96,8 +98,27 @@ export const loadPlugins = async () => {
       /* @vite-ignore */
       entry
     );
-    navs.plugins.push(...plugin.default.navs);
-    routes.plugins.push(...(plugin.default.routes ?? []));
+    registerPlugin(plugin.default);
+  }
+};
+
+// What a plugin adds goes into the lists the shell, the router and the forms read.
+export const registerPlugin = ({
+  name,
+  navs: pluginNavs = [],
+  routes: pluginRoutes = [],
+  widgets: pluginWidgets = [],
+  fields = {},
+}: AdminPluginConfig) => {
+  navs.plugins.push(...pluginNavs);
+  routes.plugins.push(...pluginRoutes);
+  widgets.plugins.push(...pluginWidgets);
+
+  for (const [renderer, component] of Object.entries(fields)) {
+    const key = `${name}:${renderer}`;
+    if (key in fieldRenderers)
+      console.warn(`Field renderer "${key}" is registered twice`);
+    fieldRenderers[key] = component;
   }
 };
 

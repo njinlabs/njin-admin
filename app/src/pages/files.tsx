@@ -1,6 +1,5 @@
-import { canList } from "@njinlabs/njin-admin/sdk";
+import { canList, useSession } from "@njinlabs/njin-admin/sdk";
 import { FileManager } from "../components/file-manager";
-import { useSession } from "../components/session";
 import { NoAccess } from "./users/shared";
 
 // /files

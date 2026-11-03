@@ -14,6 +14,7 @@ import {
   schemaQuery,
   toApiError,
   updateRecordMutation,
+  useSession,
 } from "@njinlabs/njin-admin/sdk";
 import {
   Button,
@@ -49,10 +50,10 @@ import { FormSkeleton } from "../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../components/header-slot";
 import { LocaleTabs } from "../components/locale-tabs";
 import { ListError } from "../components/record-list";
-import { useSession } from "../components/session";
 import { client } from "../lib/client";
 import { optimizedImageSrc } from "../lib/file";
 import { withoutEmpty } from "../lib/localized";
+import { fieldRenderers } from "../lib/registry";
 import { NoAccess } from "./users/shared";
 
 const ModelForm = ({
@@ -355,6 +356,7 @@ const ModelForm = ({
           control={form.control}
           locale={locale}
           filePicker={FilePickerDialog}
+          renderers={fieldRenderers}
           imageSrc={(file) => optimizedImageSrc(file.url)}
           loadRelated={(related, search) =>
             readRecords(client, related, {

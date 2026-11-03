@@ -1,6 +1,5 @@
-import { canList } from "@njinlabs/njin-admin/sdk";
+import { canList, useSession } from "@njinlabs/njin-admin/sdk";
 import { Link } from "@tanstack/react-router";
-import { useSession } from "../../components/session";
 
 // The router marks the link of the page you are on with data-status="active"; a data variant
 // beats the plain colours whatever the order of the stylesheet.

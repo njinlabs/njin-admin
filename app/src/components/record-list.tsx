@@ -6,6 +6,7 @@ import {
   readRecords,
   recordsInfiniteQuery,
   toApiError,
+  useSession,
 } from "@njinlabs/njin-admin/sdk";
 import {
   Button,
@@ -48,7 +49,6 @@ import { useDebounced } from "../lib/use-debounced";
 import { DataTable } from "./data-table";
 import { FilterDialog } from "./filter-dialog";
 import { HeaderActions } from "./header-slot";
-import { useSession } from "./session";
 
 const limit = 20;
 

@@ -1,8 +1,12 @@
-import { canList, hasFullAccess, type Row } from "@njinlabs/njin-admin/sdk";
+import {
+  canList,
+  hasFullAccess,
+  type Row,
+  useSession,
+} from "@njinlabs/njin-admin/sdk";
 import { Badge } from "@njinlabs/njin-admin/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import { RecordList } from "../../components/record-list";
-import { useSession } from "../../components/session";
 import { NoAccess } from "./shared";
 import { UsersTabs } from "./users-tabs";
 

@@ -10,6 +10,7 @@ import {
   schemaQuery,
   toApiError,
   updateVarsMutation,
+  useSession,
   varsQuery,
 } from "@njinlabs/njin-admin/sdk";
 import {
@@ -36,10 +37,10 @@ import { FormSkeleton } from "../components/form-skeleton";
 import { HeaderActions } from "../components/header-slot";
 import { LocaleTabs } from "../components/locale-tabs";
 import { ListError } from "../components/record-list";
-import { useSession } from "../components/session";
 import { client } from "../lib/client";
 import { optimizedImageSrc } from "../lib/file";
 import { withoutEmpty } from "../lib/localized";
+import { fieldRenderers } from "../lib/registry";
 import { NoAccess } from "./users/shared";
 
 type Values = Record<string, unknown>;
@@ -292,6 +293,7 @@ const SettingsForm = ({
           locale={locale}
           disabled={!mayWrite}
           filePicker={FilePickerDialog}
+          renderers={fieldRenderers}
           imageSrc={(file) => optimizedImageSrc(file.url)}
           loadRelated={(related, search) =>
             readRecords(client, related, {

@@ -6,6 +6,7 @@ import {
   recordsInfiniteQuery,
   toApiError,
   uploadFileMutation,
+  useSession,
 } from "@njinlabs/njin-admin/sdk";
 import {
   Button,
@@ -55,7 +56,6 @@ import { useDebounced } from "../lib/use-debounced";
 import { useEndReached } from "../lib/use-end-reached";
 import { HeaderActions } from "./header-slot";
 import { ListError } from "./record-list";
-import { useSession } from "./session";
 
 const limit = 24;
 

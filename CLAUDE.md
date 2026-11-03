@@ -42,8 +42,22 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
 
 ## How plugins work (do not break these)
 
-- A plugin is one file that default-exports `defineAdminPlugin({ navs, routes })`. It is built to a single ES
-  module; `styles` (a separate CSS file) are listed in the manifest next to `entry`.
+- A plugin is one file that default-exports `defineAdminPlugin({ name, navs, routes, widgets, fields })`. It is built to a
+  single ES module; `styles` (a separate CSS file) are listed in the manifest next to `entry`. The server side of the
+  same package passes it to `definePlugin({ admin: [import.meta.resolve("./admin/index.tsx")], permissions })` in njin core (the file the admin side is default-exported from; in dev the core serves it through its Vite server, and the admin reads `name` from the module).
+- What a plugin adds (`sdk/index.ts`): `navs` (section "Plugins"), `routes`, `widgets` (dashboard tiles, `pages/dashboard.tsx`)
+  and `fields` (input renderers). `requires: { resource, action }` on a nav, route or widget is checked with `can` through
+  `visible(items, permissions)`, which also sorts by `order`; a route that asks for it is guarded in `createAdminRouter`
+  (`NoAccess`, by URL too). `resource` is one of the server's catalog, including the `permissions` a server plugin
+  declares; the admin cannot invent one.
+- A plugin reads the session with `useSession`, `useClient`, `useCan` and `useCanOn` (`sdk/session.tsx`). The provider is
+  `Protected`'s and the sdk is shared, so the plugin sees the admin's context. `client` carries the token, and its 401s sign
+  out. Never give a plugin its own copy of the sdk.
+- Field renderers: the server's `plugin(type, ["<plugin>:<renderer>", options])` adds the meta `plugin: [name, options]`
+  to a field and keeps its base type. `toForm` reads it as `Form.plugin = { name, options }`; `registerPlugin`
+  (`lib/registry.tsx`) stores a plugin's `fields` as `"<plugin>:<key>"` in `fieldRenderers`, and `RenderForm` takes them
+  as `renderers`. The renderer draws the input only (`FieldProps`); the label, error and place are `RenderForm`'s. A name
+  nobody registered is drawn as the base type. Lists (`cell.tsx`) do not use plugin renderers.
 - React, `react/jsx-runtime`, `react-dom`, `@tanstack/react-query`, `@tanstack/react-router`, the sdk and the ui kit are **not**
   bundled into a plugin. The admin puts its own copies on `globalThis.__njin` (`exposeShared`) before loading any
   plugin, and the build rewrites those imports into reads from it. One React for the page, or hooks break.

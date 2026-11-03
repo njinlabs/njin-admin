@@ -1,5 +1,11 @@
-import { createContext, type ReactNode, use } from "react";
-import { type Control, Controller, type FieldValues } from "react-hook-form";
+import { createContext, type FC, type ReactNode, use } from "react";
+import {
+  type Control,
+  Controller,
+  type FieldValues,
+  useWatch,
+} from "react-hook-form";
+import type { FieldProps } from "../sdk";
 import type { FileRow } from "../sdk/api/file";
 import type { Form } from "../sdk/schema";
 import { Button } from "./button";
@@ -42,6 +48,27 @@ const FileSource = createContext<{
   picker?: FilePicker;
   imageSrc?: (file: FileRow) => string;
 }>({});
+
+// The renderers plugins registered, by "<plugin>:<renderer>", for the fields the server tagged
+// with `plugin(...)`.
+type Renderers = Record<string, FC<FieldProps>>;
+
+const PluginSource = createContext<Renderers>({});
+
+// A plugin's input, handed the whole form so it can follow another field. The form's values are
+// read here and not in the field above, so only a field drawn by a plugin re-renders on every key.
+const PluginInput = ({
+  Renderer,
+  control,
+  ...props
+}: Omit<FieldProps, "values"> & {
+  Renderer: FC<FieldProps>;
+  control: Control<FieldValues>;
+}) => {
+  const values = useWatch({ control }) as Record<string, unknown>;
+
+  return <Renderer {...props} values={values} />;
+};
 
 // Whether `RenderForm` has an input for the field yet. A page that submits only what it draws
 // uses this to leave the rest of a record as it is. A relation has one only when the form is
@@ -206,197 +233,227 @@ const FieldInput = ({
   control,
   disabled,
   action,
-}: FieldInputProps) => (
-  <Controller
-    control={control}
-    name={name}
-    render={({ field, fieldState }) => {
-      const invalid = fieldState.invalid;
-      const error = <FieldError errors={[fieldState.error]} />;
+}: FieldInputProps) => {
+  const renderers = use(PluginSource);
+  const Renderer = item.plugin && renderers[item.plugin.name];
 
-      switch (item.type) {
-        case "text":
-        case "email":
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => {
+        const invalid = fieldState.invalid;
+        const error = <FieldError errors={[fieldState.error]} />;
+
+        if (Renderer) {
           return (
             <Field invalid={invalid} disabled={disabled}>
               <LabelRow label={item.label} action={action} />
-              <Input
-                name={field.name}
-                ref={field.ref}
-                onBlur={field.onBlur}
-                type={item.type}
-                value={field.value ?? ""}
-                onChange={(event) => field.onChange(event.target.value)}
-              />
-              {error}
-            </Field>
-          );
-        case "numeric":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
-              <NumberInput
-                value={field.value}
-                onValueChange={field.onChange}
-                invalid={invalid}
-                disabled={disabled}
-              />
-              {error}
-            </Field>
-          );
-        case "boolean":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={Boolean(field.value)}
-                  onCheckedChange={field.onChange}
-                />
-                <FieldLabel>{item.label}</FieldLabel>
-                {action && <div className="ml-auto">{action}</div>}
-              </div>
-              {error}
-            </Field>
-          );
-        case "select":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
-              <Select
-                options={Object.values(item.options ?? {}).map((value) => ({
-                  value: String(value),
-                  label: String(value),
-                }))}
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              />
-              {error}
-            </Field>
-          );
-        case "datepicker":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
-              <DatePicker
-                value={field.value}
-                onChange={field.onChange}
-                disabled={disabled}
-              />
-              {error}
-            </Field>
-          );
-        case "relation":
-        case "multi_relation":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
-              <RelationField
-                item={item}
-                value={field.value}
-                onChange={field.onChange}
-                disabled={disabled}
-              />
-              {error}
-            </Field>
-          );
-        case "file":
-        case "multi_file":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
-              <FileField
-                multiple={item.type === "multi_file"}
-                value={field.value}
-                onChange={field.onChange}
-                disabled={disabled}
-              />
-              {error}
-            </Field>
-          );
-        case "richtext":
-          return (
-            <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
-              <RichText value={field.value} onChange={field.onChange} />
-              {error}
-            </Field>
-          );
-        case "object":
-          return (
-            <fieldset className="relative space-y-4 rounded-control border p-4">
-              {action && <FieldsetAction>{action}</FieldsetAction>}
-              <legend className="px-1 text-sm font-medium">{item.label}</legend>
-              <Fields
-                items={item.members ?? []}
-                prefix={name}
+              <PluginInput
+                Renderer={Renderer}
                 control={control}
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
                 disabled={disabled}
+                invalid={invalid}
+                field={item}
+                options={item.plugin?.options}
               />
               {error}
-            </fieldset>
-          );
-        case "array": {
-          const element = item.element;
-          const values: unknown[] = Array.isArray(field.value)
-            ? field.value
-            : [];
-
-          if (!element) return <></>;
-
-          // The elements are rendered from the array in the form, by position, so removing one
-          // in the middle shows the rest as they are.
-          return (
-            <fieldset className="relative space-y-3 rounded-control border p-4">
-              {action && <FieldsetAction>{action}</FieldsetAction>}
-              <legend className="px-1 text-sm font-medium">{item.label}</legend>
-              {values.map((_, index) => (
-                <FieldInput
-                  // biome-ignore lint/suspicious/noArrayIndexKey: the elements have no id of their own
-                  key={index}
-                  item={{
-                    ...element,
-                    label: `${element.label} ${index + 1}`,
-                  }}
-                  name={`${name}.${index}`}
-                  control={control}
-                  disabled={disabled}
-                  action={
-                    <RemoveButton
-                      disabled={disabled}
-                      onClick={() =>
-                        field.onChange(values.filter((_, at) => at !== index))
-                      }
-                    />
-                  }
-                />
-              ))}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => field.onChange([...values, emptyOf(element)])}
-              >
-                Add
-              </Button>
-              {error}
-            </fieldset>
+            </Field>
           );
         }
-        default:
-          return (
-            <Field>
-              <FieldLabel>{item.label}</FieldLabel>
-              <p className="text-sm text-muted-foreground">
-                No input for “{item.type}” yet.
-              </p>
-            </Field>
-          );
-      }
-    }}
-  />
-);
+
+        switch (item.type) {
+          case "text":
+          case "email":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <Input
+                  name={field.name}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  type={item.type}
+                  value={field.value ?? ""}
+                  onChange={(event) => field.onChange(event.target.value)}
+                />
+                {error}
+              </Field>
+            );
+          case "numeric":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <NumberInput
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  invalid={invalid}
+                  disabled={disabled}
+                />
+                {error}
+              </Field>
+            );
+          case "boolean":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={Boolean(field.value)}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FieldLabel>{item.label}</FieldLabel>
+                  {action && <div className="ml-auto">{action}</div>}
+                </div>
+                {error}
+              </Field>
+            );
+          case "select":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <Select
+                  options={Object.values(item.options ?? {}).map((value) => ({
+                    value: String(value),
+                    label: String(value),
+                  }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                />
+                {error}
+              </Field>
+            );
+          case "datepicker":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <DatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                />
+                {error}
+              </Field>
+            );
+          case "relation":
+          case "multi_relation":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <RelationField
+                  item={item}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                />
+                {error}
+              </Field>
+            );
+          case "file":
+          case "multi_file":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <FileField
+                  multiple={item.type === "multi_file"}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                />
+                {error}
+              </Field>
+            );
+          case "richtext":
+            return (
+              <Field invalid={invalid} disabled={disabled}>
+                <LabelRow label={item.label} action={action} />
+                <RichText value={field.value} onChange={field.onChange} />
+                {error}
+              </Field>
+            );
+          case "object":
+            return (
+              <fieldset className="relative space-y-4 rounded-control border p-4">
+                {action && <FieldsetAction>{action}</FieldsetAction>}
+                <legend className="px-1 text-sm font-medium">
+                  {item.label}
+                </legend>
+                <Fields
+                  items={item.members ?? []}
+                  prefix={name}
+                  control={control}
+                  disabled={disabled}
+                />
+                {error}
+              </fieldset>
+            );
+          case "array": {
+            const element = item.element;
+            const values: unknown[] = Array.isArray(field.value)
+              ? field.value
+              : [];
+
+            if (!element) return <></>;
+
+            // The elements are rendered from the array in the form, by position, so removing one
+            // in the middle shows the rest as they are.
+            return (
+              <fieldset className="relative space-y-3 rounded-control border p-4">
+                {action && <FieldsetAction>{action}</FieldsetAction>}
+                <legend className="px-1 text-sm font-medium">
+                  {item.label}
+                </legend>
+                {values.map((_, index) => (
+                  <FieldInput
+                    // biome-ignore lint/suspicious/noArrayIndexKey: the elements have no id of their own
+                    key={index}
+                    item={{
+                      ...element,
+                      label: `${element.label} ${index + 1}`,
+                    }}
+                    name={`${name}.${index}`}
+                    control={control}
+                    disabled={disabled}
+                    action={
+                      <RemoveButton
+                        disabled={disabled}
+                        onClick={() =>
+                          field.onChange(values.filter((_, at) => at !== index))
+                        }
+                      />
+                    }
+                  />
+                ))}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => field.onChange([...values, emptyOf(element)])}
+                >
+                  Add
+                </Button>
+                {error}
+              </fieldset>
+            );
+          }
+          default:
+            return (
+              <Field>
+                <FieldLabel>{item.label}</FieldLabel>
+                <p className="text-sm text-muted-foreground">
+                  No input for “{item.type}” yet.
+                </p>
+              </Field>
+            );
+        }
+      }}
+    />
+  );
+};
 
 // Fields that need the whole width: a text editor, a box of fields, a list, a row of chips or
 // thumbnails. The rest sit two to a row.
@@ -473,6 +530,9 @@ type RenderFormProps<T extends FieldValues> = {
   // The address an image is written into a text with (an optimized one); the file's own url if
   // not given.
   imageSrc?: (file: FileRow) => string;
+  // The inputs plugins draw fields with, by "<plugin>:<renderer>"; a field naming one that is not
+  // here is drawn as its base type.
+  renderers?: Renderers;
   disabled?: boolean;
 };
 
@@ -486,17 +546,20 @@ export const RenderForm = <T extends FieldValues>({
   loadRelated,
   filePicker,
   imageSrc,
+  renderers,
   disabled,
 }: RenderFormProps<T>) => (
   <FileSource value={{ picker: filePicker, imageSrc }}>
     <RelationSource value={{ load: loadRelated, locale }}>
-      {/* The paths come from the schema the values were typed from, but only at runtime. */}
-      <Fields
-        items={form}
-        locale={locale}
-        control={control as unknown as Control<FieldValues>}
-        disabled={disabled}
-      />
+      <PluginSource value={renderers ?? {}}>
+        {/* The paths come from the schema the values were typed from, but only at runtime. */}
+        <Fields
+          items={form}
+          locale={locale}
+          control={control as unknown as Control<FieldValues>}
+          disabled={disabled}
+        />
+      </PluginSource>
     </RelationSource>
   </FileSource>
 );

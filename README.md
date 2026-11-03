@@ -46,7 +46,20 @@ bun run lint        # biome (lint:fix and format to apply)
 
 ## How a plugin works
 
-A plugin is one file that default-exports `defineAdminPlugin({ navs, routes })`. It is built to a
+A plugin is one file that default-exports `defineAdminPlugin({ name, navs, routes, widgets, fields })`. It is built to a
 single ES module without React, TanStack Query or TanStack Router: the admin hands its own copies to
 the plugin at runtime, so there is one React for the whole page. Styles are built to a separate CSS
 file that reads the admin's design tokens as CSS variables instead of copying them.
+
+What it can add:
+
+- `navs`: menu entries (section "Plugins"), with `order` and `requires`.
+- `routes`: pages, with `requires`.
+- `widgets`: tiles of the dashboard (`size`, `order`, `requires`).
+- `fields`: input renderers for fields the server tagged with `plugin(text(), ["<name>:<renderer>", options])`.
+  `fields: { slugify: ({ value, onChange, options, values }) => ... }` is used for `"reports:slugify"`.
+
+`requires: { resource, action }` names a resource of the server's access catalog (models, `vars.<prefix>`,
+`file`, `user`, `access_group`, `analytics`, and the `permissions` the server plugin declares). Inside a
+plugin, `useSession`, `useClient`, `useCan` and `useCanOn` from the sdk read who is signed in and what they may do.
+The plugin is registered on the server with `definePlugin({ admin: [import.meta.resolve("./admin/index.tsx")], permissions: [...] })`.

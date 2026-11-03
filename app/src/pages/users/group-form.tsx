@@ -9,6 +9,7 @@ import {
   recordQuery,
   toApiError,
   updateRecordMutation,
+  useSession,
 } from "@njinlabs/njin-admin/sdk";
 import {
   Button,
@@ -23,7 +24,6 @@ import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 import { FormSkeleton } from "../../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../../components/header-slot";
-import { useSession } from "../../components/session";
 import { client } from "../../lib/client";
 import { GrantsEditor } from "./grants-editor";
 import { LoadError, NoAccess } from "./shared";

@@ -236,3 +236,50 @@ describe("RenderForm", () => {
     expect(html).toContain("No input for");
   });
 });
+
+describe("RenderForm with a plugin's renderer", () => {
+  const form: Form[] = [
+    { key: "title", label: "Title", type: "text" },
+    {
+      key: "slug",
+      label: "Slug",
+      type: "text",
+      plugin: { name: "reports:slugify", options: { from: "title" } },
+    },
+  ];
+
+  const WithRenderers = ({
+    renderers,
+  }: {
+    renderers?: Parameters<typeof RenderForm>[0]["renderers"];
+  }) => {
+    const { control } = useForm({
+      defaultValues: { title: "Hello world", slug: "hello" },
+    });
+
+    return <RenderForm form={form} control={control} renderers={renderers} />;
+  };
+
+  test("the registered renderer draws the input, under the admin's label", () => {
+    const html = renderToString(
+      <WithRenderers
+        renderers={{
+          "reports:slugify": ({ value, options, values }) => (
+            <i>{`${value}|${JSON.stringify(options)}|${values.title}`}</i>
+          ),
+        }}
+      />,
+    );
+
+    expect(html).toContain("Slug");
+    expect(html).toContain(
+      "hello|{&quot;from&quot;:&quot;title&quot;}|Hello world",
+    );
+  });
+
+  test("a name nobody registered is drawn as the base type", () => {
+    const html = renderToString(<WithRenderers renderers={{}} />);
+
+    expect(html).toContain('value="hello"');
+  });
+});

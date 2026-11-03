@@ -1,4 +1,4 @@
-import type { PluginRoute } from "@njinlabs/njin-admin/sdk";
+import { type PluginRoute, useCan } from "@njinlabs/njin-admin/sdk";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
@@ -11,6 +11,20 @@ import { Protected } from "../components/protected";
 import { Root } from "../components/root";
 import { LoginPage } from "../pages/login";
 import { SetupPage } from "../pages/setup";
+import { NoAccess } from "../pages/users/shared";
+
+// A page that asks for a permission shows the page only to someone who has it. The ones that ask
+// for none (the admin's own pages guard themselves) need no session here.
+const guarded = ({ component: Page, requires }: PluginRoute): FC => {
+  if (!requires) return Page;
+
+  return () =>
+    useCan(requires.resource, requires.action) ? (
+      <Page />
+    ) : (
+      <NoAccess what="this page" />
+    );
+};
 
 export type RouterContext = { queryClient: QueryClient };
 
@@ -58,8 +72,12 @@ export const createAdminRouter = ({
     component: SetupPage,
   });
 
-  const children = routes.map(({ path, component }) =>
-    createRoute({ getParentRoute: () => shell, path, component }),
+  const children = routes.map((route) =>
+    createRoute({
+      getParentRoute: () => shell,
+      path: route.path,
+      component: guarded(route),
+    }),
   );
 
   return createRouter({

@@ -26,6 +26,20 @@ export type Form = {
   // A field of a model with i18n that has a value per language. `type` and the rest describe the
   // value of one language; the field itself is a map of locale to that value.
   localized?: boolean;
+  // Set by the server's `plugin(type, [name, options])`: the input is drawn by the renderer a
+  // plugin registered under `name` ("reports:slugify"). `type` stays the base type's, so the
+  // schema and the validation are the base type's too, and it is what draws the field when no
+  // renderer is registered under that name.
+  plugin?: { name: string; options?: unknown };
+};
+
+// `plugin` travels as a pair, [name, options], because that is how the meta is written on the server.
+const pluginOf = (meta: object): Form["plugin"] => {
+  const { plugin } = meta as { plugin?: unknown };
+
+  return Array.isArray(plugin) && typeof plugin[0] === "string"
+    ? { name: plugin[0], options: plugin[1] }
+    : undefined;
 };
 
 // `z.fromJSONSchema` reads `anyOf: [X, { type: "null" }]`, which is how a nullable field is written,
@@ -284,7 +298,12 @@ const toField = (key: string, rawValue: z.ZodType): Form => {
   const perLocale =
     (meta as { localized?: boolean }).localized && perLocaleOf(value);
   if (perLocale) {
-    return { ...toField(key, perLocale), label: meta.label, localized: true };
+    return {
+      ...toField(key, perLocale),
+      label: meta.label,
+      localized: true,
+      plugin: pluginOf(meta) ?? toField(key, perLocale).plugin,
+    };
   }
 
   const form: Form = {
@@ -292,6 +311,7 @@ const toField = (key: string, rawValue: z.ZodType): Form => {
     label: meta.label,
     key,
     unique: meta.unique,
+    plugin: pluginOf(meta),
   };
 
   if (

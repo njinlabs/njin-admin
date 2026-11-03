@@ -67,5 +67,34 @@ describe("building and loading an admin plugin", () => {
     expect(nav.label).toBe("Reports");
     expect(nav.to).toBe("/reports");
     expect(renderToString(React.createElement(nav.icon))).toContain("<svg");
+    expect(plugin.name).toBe("reports");
+    expect(nav.requires).toEqual({ resource: "report", action: "read" });
+    expect(Object.keys(plugin.fields)).toEqual(["slugify"]);
+  });
+
+  test("a widget built apart reads the admin's session", async () => {
+    const { default: plugin } = await import(pathToFileURL(built).href);
+    const [{ component: Total }] = plugin.widgets;
+    const session = (permissions: sdk.Permissions) =>
+      renderToString(
+        React.createElement(
+          sdk.SessionContext,
+          {
+            value: {
+              user: { id: "u1" },
+              permissions,
+              client: sdk.createClient(),
+            },
+          },
+          React.createElement(Total),
+        ),
+      );
+
+    expect(
+      session([
+        { resource: "report", scoped: false, actions: { read: "all" } },
+      ]),
+    ).toContain("allowed");
+    expect(session([])).toContain("denied");
   });
 });

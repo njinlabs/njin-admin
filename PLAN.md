@@ -106,8 +106,15 @@ teruji sendiri.
 
 Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pihak ketiga:
 
-- [ ] **Apa yang boleh disumbang plugin**: renderer field kustom (`renderAs` baru), widget dashboard,
-      halaman di bawah `/content/<prefix>`, aksi tambahan di daftar record.
+- [x] **Apa yang boleh disumbang plugin**: menu (`navs`, `order`, `requires`), halaman (`routes`, `requires`), widget dashboard
+      (`widgets`: `size`, `order`, `requires`; `pages/dashboard.tsx`, tiap widget dalam `ErrorBoundary`) dan renderer field
+      (`fields`, dipilih server lewat `plugin(text(), ["nama-plugin:renderer", options])`, disimpan sebagai
+      `"<name>:<renderer>"`). `name` plugin wajib. Izin plugin dideklarasikan di `definePlugin({ permissions })` server.
+- [ ] Renderer field dan i18n: field `localized` berupa peta bahasa, jadi `FieldProps.values` berisi peta untuk field yang
+      diikuti (mis. `title`) dan renderer belum tahu bahasa yang sedang diedit. Beri renderer `locale` dan nilai yang sudah
+      dipilih per bahasa (atau helper untuk membacanya). Ketahuan di plugin contoh `slugify` saat i18n menyala.
+- [ ] Yang belum: halaman di bawah `/content/<prefix>`, aksi tambahan di daftar record, renderer untuk sel daftar,
+      widget bawaan (analytics), section menu bebas.
 - [ ] **Versi kontrak**: manifest membawa versi sdk, loader menolak plugin yang tidak cocok dengan pesan jelas.
 - [ ] **Versi modul bersama**: plugin dibuild terhadap React/Router versi tertentu; tentukan aturan dan cek.
 - [ ] **Panduan CSS untuk plugin**: wajib `@source` ke folder plugin sendiri (lihat `plugin.css`), kelas buatan sendiri
@@ -165,14 +172,18 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
       `canOn` (untuk satu baris, baris sendiri pada level `own`) ada di `sdk/api/permissions.ts`.
 - [ ] Menu dan tombol mengikuti izin: sudah di menu (Content, Settings, Files, Users) dan daftar konten (New, Edit, Hapus,
       empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Form konten dan publish sudah mengikuti izin; halaman Settings juga.
-- [ ] Hook izin untuk plugin (sdk hanya
-      punya fungsi murni; `useSession` ada di admin dan belum dibagi).
+- [x] Hook izin untuk plugin: `useSession`, `useClient`, `useCan`, `useCanOn` di `sdk/session.tsx` (konteks dipasang
+      `Protected`, sdk dibagi ke plugin). `requires` pada menu, halaman, dan widget mengikutinya.
 
 ## 6. Integrasi di core njin
 
 Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum menyentuh bagian yang sama.
 
-- [ ] `Plugin.admin.entry` dan `admin.plugins` di config (plugin lokal tanpa paket npm).
+- [x] `definePlugin({ admin: [plugin], permissions })` di core: `admin` berisi lokasi file admin plugin (`import.meta.resolve(...)`), dilayani Vite dev server core lewat `GET /api/admin/manifest` (`adminPluginDev` mengalihkan modul bersama ke `globalThis.__njin`; paket yang bergantung pada React tidak di-pre-bundle),
+      `permissions` ditambahkan ke katalog izin (`buildCatalog`, `GET /api/access/catalog`, `/api/auth/permissions`),
+      `plugin(type, [name, options])` di data type. Tes di `tests/core` dan `tests/modules/plugin_permissions.test.ts`.
+- [ ] Tooling build plugin admin yang mengisi lokasi build ke objek `admin` (entry/styles) supaya manifest bisa dibuat.
+- [ ] Plugin lokal tanpa paket npm (`admin.plugins` di config).
 - [ ] `GET /api/admin/manifest`, termasuk `styles` per plugin.
 - [ ] Layani `/_admin/plugins/*` (pakai `resolveSafePath`).
 - [ ] `njin build`/`njin dev` membuild plugin lokal dengan `adminPluginConfig`
