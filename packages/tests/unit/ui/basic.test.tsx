@@ -61,6 +61,13 @@ describe("FieldError", () => {
   test("renders nothing without a message", () => {
     expect(render([{}])).not.toContain("text-danger");
   });
+
+  test("can stand on its own, outside a field", () => {
+    const html = renderToString(<FieldError>The request failed.</FieldError>);
+
+    expect(html).toContain("The request failed.");
+    expect(html).toContain('role="alert"');
+  });
 });
 
 describe("Input", () => {

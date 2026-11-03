@@ -1,20 +1,26 @@
 import { Field as BaseField } from "@base-ui/react/field";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, use } from "react";
 import { cn } from "./cn";
+
+// Base UI's error needs a Field around it to find its input. A message on its own (a failed
+// request under a form, a box of fields) has none, so `FieldError` asks whether it is in one.
+const InsideField = createContext(false);
 
 export const Field = ({
   className,
   orientation = "vertical",
   ...props
 }: BaseField.Root.Props & { orientation?: "vertical" | "horizontal" }) => (
-  <BaseField.Root
-    className={cn(
-      "flex gap-2",
-      orientation === "horizontal" ? "items-center" : "flex-col",
-      className as string,
-    )}
-    {...props}
-  />
+  <InsideField value>
+    <BaseField.Root
+      className={cn(
+        "flex gap-2",
+        orientation === "horizontal" ? "items-center" : "flex-col",
+        className as string,
+      )}
+      {...props}
+    />
+  </InsideField>
 );
 
 export const FieldLabel = ({ className, ...props }: BaseField.Label.Props) => (
@@ -54,7 +60,20 @@ export const FieldError = ({
       .filter(Boolean)
       .join(", ");
 
+  const inside = use(InsideField);
+
   if (!message) return null;
+
+  if (!inside) {
+    return (
+      <p
+        role="alert"
+        className={cn("text-sm text-danger", className as string)}
+      >
+        {message}
+      </p>
+    );
+  }
 
   return (
     <BaseField.Error
