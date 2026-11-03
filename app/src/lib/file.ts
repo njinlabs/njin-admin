@@ -62,3 +62,15 @@ export const acceptAttribute = (accept?: readonly Accept[]) =>
   !accept || accept.includes("other")
     ? undefined
     : accept.map((kind) => `${kind}/*`).join(",");
+
+// The origin of the njin server: the page's own when njin serves the admin, the server named in
+// VITE_API_URL while the admin runs on its own dev server.
+const apiOrigin = () =>
+  import.meta.env.DEV && import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL
+    : window.location.origin;
+
+// What an image is written into a text with: through the server's /img, which serves it resized and
+// as webp. Absolute, since the text is read on the site and not only in the admin.
+export const optimizedImageSrc = (url: string) =>
+  `${apiOrigin()}/img?url=${encodeURIComponent(absoluteUrl(url, apiOrigin()))}`;

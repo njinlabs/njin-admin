@@ -54,7 +54,11 @@ export const Select = ({
       </BaseSelect.Icon>
     </BaseSelect.Trigger>
     <BaseSelect.Portal>
-      <BaseSelect.Positioner sideOffset={4} className="z-50 outline-none">
+      <BaseSelect.Positioner
+        sideOffset={4}
+        alignItemWithTrigger={false}
+        className="z-50 outline-none"
+      >
         <BaseSelect.Popup className="max-h-(--available-height) min-w-(--anchor-width) overflow-y-auto rounded-control border bg-background p-1 text-foreground shadow-md outline-none">
           {options.map((option) => (
             <BaseSelect.Item

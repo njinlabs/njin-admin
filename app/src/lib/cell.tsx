@@ -40,9 +40,17 @@ const relationLabel = (value: unknown, labelKey?: string) => {
 
 // What a list cell shows for the value of `form`.
 export const renderCell = (
-  form: Pick<Form, "type" | "labelKey">,
+  form: Pick<Form, "type" | "labelKey" | "localized">,
   value: unknown,
 ): ReactNode => {
+  // A list comes with every language of a localized field; the cell shows the first it has.
+  if (form.localized && typeof value === "object" && value !== null) {
+    return renderCell(
+      { ...form, localized: false },
+      Object.values(value).find((entry) => entry !== null && entry !== ""),
+    );
+  }
+
   if (value === undefined || value === null || value === "") return <Empty />;
 
   switch (form.type) {

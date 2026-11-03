@@ -14,6 +14,7 @@ import {
   PiUsersDuotone,
 } from "react-icons/pi";
 import { ComponentsPage } from "../pages/components";
+import { ContentFormPage } from "../pages/content-form";
 import { ContentListPage } from "../pages/content-list";
 import { FilesPage } from "../pages/files";
 import { GroupFormPage } from "../pages/users/group-form";
@@ -63,6 +64,8 @@ export const routes = {
     { path: "/users/groups/new", component: GroupFormPage },
     { path: "/users/groups/$id/edit", component: GroupFormPage },
     { path: "/content/$prefix", component: ContentListPage },
+    { path: "/content/$prefix/new", component: ContentFormPage },
+    { path: "/content/$prefix/$id/edit", component: ContentFormPage },
     { path: "/settings/$prefix", component: Dashboard },
     // Kit showcase; reachable by URL only, it is not a menu entry.
     { path: "/components", component: ComponentsPage },

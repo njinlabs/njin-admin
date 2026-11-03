@@ -1,3 +1,4 @@
+import type { Form } from "@njinlabs/njin-admin/sdk";
 import {
   Badge,
   Button,
@@ -12,11 +13,13 @@ import {
   FieldLabel,
   Input,
   MultiSelect,
+  RenderForm,
   Select,
   Skeleton,
   Switch,
 } from "@njinlabs/njin-admin/ui";
 import { type ReactNode, useState } from "react";
+import { useForm } from "react-hook-form";
 
 const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
@@ -25,6 +28,71 @@ const statuses = [
   { value: "review", label: "In review" },
   { value: "live", label: "Published" },
 ];
+
+const demoForm: Form[] = [
+  { key: "title", label: "Title", type: "text" },
+  { key: "contact", label: "Contact", type: "email" },
+  { key: "price", label: "Price", type: "numeric" },
+  { key: "live", label: "Live", type: "boolean" },
+  {
+    key: "status",
+    label: "Status",
+    type: "select",
+    options: { draft: "draft", live: "live" },
+  },
+  { key: "on", label: "Date", type: "datepicker" },
+  {
+    key: "author",
+    label: "Author",
+    type: "object",
+    members: [
+      { key: "name", label: "Name", type: "text" },
+      { key: "age", label: "Age", type: "numeric" },
+    ],
+  },
+  {
+    key: "tags",
+    label: "Tags",
+    type: "array",
+    element: { label: "Tag", type: "text" },
+  },
+  {
+    key: "links",
+    label: "Links",
+    type: "array",
+    element: {
+      label: "Link",
+      type: "object",
+      members: [
+        { key: "url", label: "URL", type: "text" },
+        { key: "blank", label: "New tab", type: "boolean" },
+      ],
+    },
+  },
+  {
+    key: "category",
+    label: "Category",
+    type: "relation",
+    model: "category",
+    labelKey: "name",
+  },
+  {
+    key: "topics",
+    label: "Topics",
+    type: "multi_relation",
+    model: "category",
+    labelKey: "name",
+  },
+  { key: "body", label: "Body", type: "richtext" },
+];
+
+const names = ["News", "Sport", "Travel", "Food", "Music", "Tech", "Health"];
+
+// Stands in for the server: the related records whose name has what was typed.
+const loadDemoRelated = async (_model: string, search: string) =>
+  names
+    .filter((name) => name.toLowerCase().includes(search.toLowerCase()))
+    .map((name) => ({ id: name.toLowerCase(), name }));
 
 const Section = ({
   title,
@@ -53,6 +121,18 @@ export const ComponentsPage = () => {
   const [windowOpen, setWindowOpen] = useState(false);
   const [agreed, setAgreed] = useState(true);
   const [chosen, setChosen] = useState<string[]>(["draft"]);
+  const demo = useForm({
+    defaultValues: {
+      title: "",
+      price: undefined,
+      live: false,
+      status: "draft",
+      author: { name: "" },
+      tags: ["one"],
+      links: [],
+      topics: [],
+    },
+  });
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -240,6 +320,19 @@ export const ComponentsPage = () => {
               disabled
             />
           </Field>
+        </div>
+      </Section>
+
+      <Section title="RenderForm">
+        <div className="max-w-sm space-y-4">
+          <RenderForm
+            form={demoForm}
+            control={demo.control}
+            loadRelated={loadDemoRelated}
+          />
+          <pre className="rounded-control bg-subtle p-2 text-xs">
+            {JSON.stringify(demo.watch(), null, 2)}
+          </pre>
         </div>
       </Section>
 
