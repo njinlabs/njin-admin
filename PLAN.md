@@ -16,7 +16,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
 - [x] Shell: layout dengan sidebar dari `navs`, judul halaman, token desain pertama dan mode gelap lewat
       `prefers-color-scheme` (`app/src/components/shell.tsx`, `theme.css`).
-- [x] Biome, 98 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Biome, 139 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
 - [x] Repo di GitHub (`njinlabs/njin-admin`, public), `LICENSE`, dan CI (biome, typecheck, tes, build admin).
 
 ## Belum terbukti
@@ -97,11 +97,13 @@ Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pi
 Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
 
 - [x] **Warna utama diputuskan**: `#186049` jadi langkah 700 skala `primary` 50-950 (OKLCH, hue tetap). `primary` =
-      700 di mode terang, 400 di mode gelap. Token lain (abu-abu, `danger`) masih nilai pertama.
+      700 di mode terang, 300 di mode gelap. Kontras mode gelap dinaikkan (teks, teks redup, border). Token lain
+      (abu-abu, `danger`) masih nilai pertama.
 - [x] **Kit di `packages/src/ui/`, export `./ui`** (Base UI, hanya token, dibagi ke plugin lewat `sharedModules`):
       `Button`, `Field`/`FieldLabel`/`FieldDescription`/`FieldError`, `Input`, `Switch`, `Select`, `Popover`,
-      `Calendar` (react-day-picker), `DatePicker`, `Skeleton`, `ConfirmDialog` (AlertDialog Base UI, versi sempit dari
-      `Dialog`), dan varian `danger-ghost` pada `Button`. Halaman `/components` di admin untuk melihatnya.
+      `Calendar` (react-day-picker), `DatePicker`, `Skeleton`, `Dialog`, `ConfirmDialog` (AlertDialog Base UI, versi sempit dari
+      `Dialog`, dengan animasi), `Badge`, `Checkbox`, `MultiSelect`, dan varian `danger-ghost` pada `Button`. Halaman `/components` di admin untuk melihatnya.
+- [x] Item menu aktif di sidebar memakai warna `primary` (bukan abu-abu) supaya jelas terlihat.
 - [ ] Belum dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, `ConfirmDialog`, popover menu user,
       mode gelap kit.
 - [ ] **Yang tidak butuh API**, urutan: `RenderForm` (text, email, numeric, boolean, select, datepicker, object, array;

@@ -137,7 +137,7 @@ against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAd
 
 - Styled with the tokens in `theme.css` only (`bg-primary`, `border`, `rounded-control`, `text-danger`), never a fixed
   colour, so dark mode and plugins follow. The primary scale is built around `#186049` (the 700 step); `primary` is 700
-  in light mode and 400 in dark mode.
+  in light mode and 300 in dark mode.
 - One file per component, API kept flat and small (`Select` takes `options`, not compound parts). The kit knows nothing
   of react-hook-form: its inputs are controlled, and `FieldError` takes `errors={[fieldState.error]}` structurally.
   The glue from `Form` (the schema's field list) to the kit belongs in `RenderForm`.
