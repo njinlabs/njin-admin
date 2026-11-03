@@ -80,7 +80,11 @@ teruji sendiri.
 - [ ] **Content, sisanya**: info wajib/opsional dari schema (tanda bintang, teks kosong jangan dikirim `""`,
       relation tunggal yang dikosongkan `null`); urut ulang elemen array dan batas
       `min`/`max` pada tombol Add; label `select` dari i18n; pembatasan jenis file per field (butuh info dari server).
-- [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
+- [x] **Settings** (`pages/settings.tsx`, `/settings/$prefix`): form grup vars dengan `RenderForm`, dibaca/ditulis sekaligus
+      (`varsQuery`, `updateVarsMutation`). Grup draftable: lencana status, Discard/Save/Unpublish/Publish (`draftVarsMutation`);
+      grup i18n: satu tab per bahasa, semua disimpan bersama. Izin `vars.<prefix>` read/write: tanpa write formnya hanya baca.
+      Umpan balik "Saved" dan peringatan perubahan belum disimpan sama seperti form konten. Bagian bersama form konten diekstrak
+      (`ActionButton`, `LocaleTabs`, `withoutEmpty`). Belum dicoba di browser.
 - [x] **Files** (`pages/files.tsx`, `components/file-manager.tsx`, `file-picker-dialog.tsx`): grid dengan cari dan infinite
       scroll, unggah banyak berkas dengan panel progres, unduh, salin link, hapus (`ConfirmDialog`), semua mengikuti izin
       `file`. Halaman Files dan pemilih adalah komponen yang sama (`FileManager`); `picker` menambah pilihan satu/banyak,
@@ -158,7 +162,7 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
       `Protected` bersama user sebelum halaman mana pun tampil, lalu dibaca lewat `useSession()`. `can`, `canList` dan
       `canOn` (untuk satu baris, baris sendiri pada level `own`) ada di `sdk/api/permissions.ts`.
 - [ ] Menu dan tombol mengikuti izin: sudah di menu (Content, Settings, Files, Users) dan daftar konten (New, Edit, Hapus,
-      empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Form konten dan publish sudah mengikuti izin; tinggal halaman Settings.
+      empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Form konten dan publish sudah mengikuti izin; halaman Settings juga.
 - [ ] Hook izin untuk plugin (sdk hanya
       punya fungsi murni; `useSession` ada di admin dan belum dibagi).
 
@@ -188,7 +192,7 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 
 1. ~~Cek di browser~~ dan ~~lapisan data (1)~~: selesai.
 2. ~~Sidebar dari `useQuery(schemaQuery)`~~ dan ~~Content: daftar, form, draft/publish, i18n~~: selesai (sisanya di
-   "Content, sisanya"). Lanjut Settings: form yang sama dengan model, satu record per grup.
+   "Content, sisanya"). Settings selesai; lanjut Analytics/Dashboard.
 4. Kontrak plugin (3) sebelum plugin pihak ketiga pertama.
 5. Integrasi core (6) dan sisa auth (5): 401, izin.
 6. Settings, Files, Users, Analytics.

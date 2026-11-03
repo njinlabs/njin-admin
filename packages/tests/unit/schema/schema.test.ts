@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import z from "zod";
 import {
   getDefaultValues,
+  localizedDefault,
   toForm,
   transformSchema,
 } from "../../../src/sdk/schema/schema";
@@ -311,5 +312,40 @@ describe("a model with i18n", () => {
     expect(schema.safeParse({ ...ok, title: { id: "Hi" } }).success).toBe(
       false,
     );
+  });
+});
+
+describe("localizedDefault", () => {
+  const language = (extra: object) => ({
+    type: "object",
+    propertyNames: { type: "string" },
+    additionalProperties: {
+      renderAs: "text",
+      type: "string",
+      label: "T",
+      localized: true,
+      ...extra,
+    },
+    label: "T",
+    localized: true,
+  });
+  const { schema } = build({
+    type: "object",
+    properties: {
+      tagline: language({ default: "Welcome" }),
+      motto: language({}),
+      phone: { renderAs: "text", type: "string", label: "Phone", default: "1" },
+    },
+    required: [],
+  });
+
+  test("is what a language holds when nothing was written in it", () => {
+    expect(localizedDefault(schema, "tagline")).toBe("Welcome");
+  });
+
+  test("is nothing for a field without a default, or one that is not per language", () => {
+    expect(localizedDefault(schema, "motto")).toBeUndefined();
+    expect(localizedDefault(schema, "phone")).toBeUndefined();
+    expect(localizedDefault(schema, "missing")).toBeUndefined();
   });
 });

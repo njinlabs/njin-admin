@@ -17,14 +17,10 @@ import {
 } from "@njinlabs/njin-admin/sdk";
 import {
   Button,
-  type ButtonProps,
   ConfirmDialog,
   cn,
   FieldError,
   hasInput,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   RenderForm,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +31,7 @@ import {
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   PiArrowCounterClockwise,
@@ -46,43 +42,18 @@ import {
   PiTrash,
   PiX,
 } from "react-icons/pi";
+import { ActionButton } from "../components/action-button";
 import { overallStatus, StatusBadge } from "../components/draft-status";
 import { FilePickerDialog } from "../components/file-picker-dialog";
 import { FormSkeleton } from "../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../components/header-slot";
+import { LocaleTabs } from "../components/locale-tabs";
 import { ListError } from "../components/record-list";
 import { useSession } from "../components/session";
 import { client } from "../lib/client";
 import { optimizedImageSrc } from "../lib/file";
+import { withoutEmpty } from "../lib/localized";
 import { NoAccess } from "./users/shared";
-
-// What is sent for a field with a value per language: the languages that have one. A language
-// left empty is no translation, not an empty text.
-const withoutEmpty = (value: unknown) =>
-  Object.fromEntries(
-    Object.entries((value ?? {}) as Record<string, unknown>).filter(
-      ([, entry]) => entry !== undefined && entry !== null && entry !== "",
-    ),
-  );
-
-// An action of the header: icon and label, and on a narrow screen the icon alone, so that all of
-// them fit beside the title. The label stays as the accessible name and the tooltip.
-const ActionButton = ({
-  icon,
-  label,
-  className,
-  ...props
-}: ButtonProps & { icon: ReactNode; label: string }) => (
-  <Button
-    aria-label={label}
-    title={label}
-    className={cn("max-sm:w-9 max-sm:px-0", className)}
-    {...props}
-  >
-    {icon}
-    <span className="hidden sm:inline">{label}</span>
-  </Button>
-);
 
 const ModelForm = ({
   model,
@@ -342,69 +313,18 @@ const ModelForm = ({
         )}
       </HeaderActions>
 
-      {/* data-bleed takes the page's own padding away, so the bar runs from edge to edge under the
-          header; the form below then pads itself. */}
       {shown.length > 0 && (
-        <div
-          data-bleed
-          role="tablist"
-          className="sticky top-0 z-10 flex shrink-0 items-center overflow-x-auto border-b border-border bg-background px-4 md:px-8"
+        <LocaleTabs
+          codes={shown}
+          active={locale}
+          onSelect={setLocale}
+          failing={failing}
+          addable={addable}
+          onAdd={(code) => {
+            setAdded([...added, code]);
+            setLocale(code);
+          }}
         >
-          {shown.map((code) => (
-            <button
-              key={code}
-              type="button"
-              role="tab"
-              aria-selected={code === locale}
-              onClick={() => setLocale(code)}
-              className={cn(
-                "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm outline-none transition-colors focus-visible:text-foreground",
-                code === locale
-                  ? "border-primary font-medium text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {code}
-              {failing(code) && (
-                <span
-                  className="size-1.5 rounded-full bg-danger"
-                  role="img"
-                  aria-label="has errors"
-                />
-              )}
-            </button>
-          ))}
-          {addable.length > 0 && (
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <button
-                    type="button"
-                    className="-mb-px shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
-                  />
-                }
-              >
-                + Add language
-              </PopoverTrigger>
-              <PopoverContent className="flex w-40 flex-col p-1">
-                {addable.map((code) => (
-                  <Button
-                    key={code}
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="justify-start"
-                    onClick={() => {
-                      setAdded([...added, code]);
-                      setLocale(code);
-                    }}
-                  >
-                    {code}
-                  </Button>
-                ))}
-              </PopoverContent>
-            </Popover>
-          )}
           {locale && locale !== i18n?.defaultLocale && (
             <Button
               type="button"
@@ -419,7 +339,7 @@ const ModelForm = ({
               <PiTrash />
             </Button>
           )}
-        </div>
+        </LocaleTabs>
       )}
 
       <form

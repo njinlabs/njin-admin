@@ -233,6 +233,20 @@ const parseArray = (input: z.ZodArray) => {
   return form;
 };
 
+// What one language of a localized field holds when nothing was written in it: its own default, or
+// undefined. A settings group is read with every language filled in this way, so a language only
+// has something of its own when its value differs from this.
+export const localizedDefault = (
+  input: z.ZodObject<any>,
+  key: string,
+): unknown => {
+  const raw = input.shape[key] as z.ZodType | undefined;
+  const perLocale = raw && perLocaleOf(unwrap(raw).type);
+  const parsed = perLocale?.safeParse(undefined);
+
+  return parsed?.success ? parsed.data : undefined;
+};
+
 export const getDefaultValues = (
   input: z.ZodObject<any>,
 ): Record<string, unknown> => {

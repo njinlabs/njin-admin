@@ -168,6 +168,9 @@ a field a newer server adds is left alone rather than blocking the save.
   become one `filters[field][$op]` object, a rule with no value is not sent. A draftable model also has a Status column and
   filter. The form warns before leaving with unsaved edits (`useBlocker`; set `leaving` before navigating after a create),
   shows "Saved" on the Save button, and removes one language from the tab bar (`removeLocaleMutation`).
+- Settings (`pages/settings.tsx`) is the same form for a settings group: one document per group, so there is no create or list;
+  read with `varsQuery` (no locale: every language as a map), written with `updateVarsMutation`, published with
+  `draftVarsMutation`. Permissions are `vars.<prefix>` `read`/`write` (publish is `write`); without write the form is disabled.
 - Loading looks like what is loading: `FormSkeleton` follows the model's fields and the grid, `TableSkeleton` the list;
   both hold the header buttons in place. Do not use a single block.
 - `FieldError` works with or without a `Field` around it, so a message about the whole form (a failed request) can use it.

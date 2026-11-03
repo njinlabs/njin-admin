@@ -4,7 +4,7 @@ import {
   queryOptions,
 } from "@tanstack/react-query";
 import type { AxiosInstance } from "axios";
-import { type ReadQuery, toParams } from "./model";
+import { type DraftAction, type ReadQuery, toParams } from "./model";
 
 // GET /api/vars/<prefix>. published: true reads what is live, for draftable groups.
 export const getVars = async <T extends Record<string, unknown>>(
@@ -51,6 +51,40 @@ export const updateVarsMutation = <T extends Record<string, unknown>>(
 ) =>
   mutationOptions({
     mutationFn: (input: Partial<T>) => updateVars<T>(client, prefix, input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["vars", prefix] }),
+  });
+
+// POST /api/vars/<prefix>/<action>. Only for draftable groups. For i18n groups, locales limits it
+// to those languages; leave it out for every language.
+export const draftVars = async <T extends Record<string, unknown>>(
+  client: AxiosInstance,
+  prefix: string,
+  action: DraftAction,
+  locales?: string[],
+): Promise<T> => {
+  const { data } = await client.post<{ data: T }>(
+    `/api/vars/${prefix}/${action}`,
+    undefined,
+    { params: { locale: locales?.join(",") } },
+  );
+
+  return data.data;
+};
+
+export const draftVarsMutation = <T extends Record<string, unknown>>(
+  client: AxiosInstance,
+  queryClient: QueryClient,
+  prefix: string,
+) =>
+  mutationOptions({
+    mutationFn: ({
+      action,
+      locales,
+    }: {
+      action: DraftAction;
+      locales?: string[];
+    }) => draftVars<T>(client, prefix, action, locales),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["vars", prefix] }),
   });

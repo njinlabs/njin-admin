@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { QueryClient } from "@tanstack/react-query";
 import {
+  draftVars,
+  draftVarsMutation,
   getVars,
   updateVars,
   updateVarsMutation,
@@ -55,4 +57,30 @@ test("updateVarsMutation puts the fields, then refreshes the group", async () =>
 
   expect(sent[0]).toMatchObject({ method: "put", url: "/api/vars/site" });
   expect(queries.getQueryState(key)?.isInvalidated).toBe(true);
+});
+
+test("draftVars posts the action, limited to the languages given", async () => {
+  const { client, sent, uri } = capture({ data: { title: "a" } });
+
+  await draftVars<Site>(client, "site", "publish");
+  await draftVars<Site>(client, "site", "discard", ["en", "id"]);
+
+  expect(sent[0]).toMatchObject({ method: "post" });
+  expect(uri(0)).toBe("/api/vars/site/publish");
+  expect(uri(1)).toBe("/api/vars/site/discard?locale=en,id");
+});
+
+test("draftVarsMutation refreshes the group", async () => {
+  const { client } = capture({ data: { title: "a" } });
+  const queryClient = new QueryClient();
+  const invalidated: unknown[] = [];
+  queryClient.invalidateQueries = (async (filters: unknown) => {
+    invalidated.push(filters);
+  }) as never;
+
+  await runMutation(draftVarsMutation<Site>(client, queryClient, "site"), {
+    action: "unpublish" as const,
+  });
+
+  expect(invalidated).toEqual([{ queryKey: ["vars", "site"] }]);
 });
