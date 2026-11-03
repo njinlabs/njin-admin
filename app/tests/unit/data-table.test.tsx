@@ -75,3 +75,34 @@ describe("DataTable", () => {
     expect(render({ data: [] })).toContain("Nobody.");
   });
 });
+
+describe("DataTable with a fixed layout", () => {
+  const sized: ColumnDef<Person>[] = [
+    { accessorKey: "name", header: "Name", size: 240, meta: { flex: true } },
+    { accessorKey: "id", header: "Id", size: 88 },
+  ];
+
+  const Fixed = () => {
+    const table = useReactTable({
+      data: [{ id: "1", name: "Ada" }],
+      columns: sized,
+      getCoreRowModel: getCoreRowModel(),
+    });
+
+    return <DataTable table={table} fixedLayout />;
+  };
+
+  test("a column is as wide as its size, and the flex one has it as its least", () => {
+    const html = renderToString(<Fixed />);
+
+    expect(html).toContain("table-fixed");
+    expect(html).toContain("min-width:328px");
+    expect(html).toContain("width:88px");
+    expect(html).toContain("min-width:240px");
+    expect(html).not.toMatch(/[^-]width:240px/);
+  });
+
+  test("a table without it is left as it was", () => {
+    expect(render({ data: [] })).not.toContain("table-fixed");
+  });
+});

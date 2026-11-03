@@ -6,7 +6,17 @@ import {
   recordsInfiniteQuery,
   toApiError,
 } from "@njinlabs/njin-admin/sdk";
-import { Button, ConfirmDialog, Input } from "@njinlabs/njin-admin/ui";
+import {
+  Button,
+  Checkbox,
+  ConfirmDialog,
+  Field,
+  FieldLabel,
+  Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@njinlabs/njin-admin/ui";
 import {
   useInfiniteQuery,
   useMutation,
@@ -17,10 +27,12 @@ import {
   type ColumnDef,
   getCoreRowModel,
   type SortingState,
+  type Table,
   useReactTable,
 } from "@tanstack/react-table";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
+  PiColumns,
   PiMagnifyingGlass,
   PiPencilSimple,
   PiPlus,
@@ -35,6 +47,39 @@ import { HeaderActions } from "./header-slot";
 import { useSession } from "./session";
 
 const limit = 20;
+
+// The columns a person has turned off, kept per model in this browser. Before they have chosen
+// it is what the list starts with.
+const storageKey = (kind: "columns" | "widths", prefix: string) =>
+  `njin-admin.${kind}.${prefix}`;
+
+const readStored = <T,>(
+  kind: "columns" | "widths",
+  prefix: string,
+  fallback: T,
+  valid: (value: unknown) => boolean,
+): T => {
+  try {
+    const stored = localStorage.getItem(storageKey(kind, prefix));
+    const parsed: unknown = stored ? JSON.parse(stored) : null;
+
+    return valid(parsed) ? (parsed as T) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const writeStored = (
+  kind: "columns" | "widths",
+  prefix: string,
+  value: unknown,
+) => {
+  try {
+    localStorage.setItem(storageKey(kind, prefix), JSON.stringify(value));
+  } catch {
+    // Not kept, but the list still follows the choice for now.
+  }
+};
 
 export const ListError = ({ onRetry }: { onRetry: () => void }) => (
   <div className="flex flex-col items-start gap-2 text-sm text-muted-foreground">
@@ -68,6 +113,65 @@ const Empty = ({
   </>
 );
 
+// Which columns to show. What is chosen is the list of those turned off, so a column the model
+// gains later shows up by itself.
+const ColumnsMenu = ({
+  table,
+  hidden,
+  onChange,
+  onReset,
+}: {
+  table: Table<Row>;
+  hidden: string[];
+  onChange: (hidden: string[]) => void;
+  // Back to the columns and widths the list starts with.
+  onReset: () => void;
+}) => (
+  <Popover>
+    <PopoverTrigger
+      render={<Button variant="outline" aria-label="Columns" title="Columns" />}
+    >
+      <PiColumns />
+      <span className="hidden sm:inline">Columns</span>
+    </PopoverTrigger>
+    <PopoverContent align="end" className="max-h-80 w-56 overflow-y-auto p-3">
+      <div className="space-y-2">
+        {table
+          .getAllLeafColumns()
+          .filter((column) => column.getCanHide())
+          .map((column) => (
+            <Field key={column.id} orientation="horizontal">
+              <Checkbox
+                checked={!hidden.includes(column.id)}
+                onCheckedChange={(shown) =>
+                  onChange(
+                    shown
+                      ? hidden.filter((id) => id !== column.id)
+                      : [...hidden, column.id],
+                  )
+                }
+              />
+              <FieldLabel>
+                {typeof column.columnDef.header === "string"
+                  ? column.columnDef.header
+                  : column.id}
+              </FieldLabel>
+            </Field>
+          ))}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="w-full"
+          onClick={onReset}
+        >
+          Reset
+        </Button>
+      </div>
+    </PopoverContent>
+  </Popover>
+);
+
 type RecordListProps = {
   // The model's prefix: the API path and the resource its permissions are about.
   prefix: string;
@@ -81,6 +185,11 @@ type RecordListProps = {
   above?: ReactNode;
   // For a row that must not be deleted even though the caller may delete others (their own account).
   keep?: (row: Row) => boolean;
+  // Columns keep a width of their own and are cut ("…") where the text is longer, and the person
+  // chooses which are shown (kept in this browser). `hidden` are the ones off until they choose.
+  fixedColumns?: { hidden: string[] };
+  // The language the list is read in, for a model with i18n.
+  locale?: string;
 };
 
 // The records of one model as a searchable, sortable table that loads page after page, with the
@@ -92,12 +201,36 @@ export const RecordList = ({
   columns: content,
   above,
   keep,
+  fixedColumns,
+  locale,
 }: RecordListProps) => {
   const queryClient = useQueryClient();
   const { user, permissions } = useSession();
   const [searchText, setSearchText] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [deleting, setDeleting] = useState<Row | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState(() =>
+    readStored("columns", prefix, fixedColumns?.hidden ?? [], Array.isArray),
+  );
+  // The widths a person has dragged the columns to, by column.
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>(() =>
+    readStored(
+      "widths",
+      prefix,
+      {},
+      (value) => typeof value === "object" && value !== null,
+    ),
+  );
+
+  // Dragging changes the width many times a second; what is kept is where it came to rest.
+  useEffect(() => {
+    const timer = setTimeout(
+      () => writeStored("widths", prefix, columnSizing),
+      300,
+    );
+
+    return () => clearTimeout(timer);
+  }, [columnSizing, prefix]);
 
   const mayCreate = !!can(permissions, prefix, "create");
   const hasActions =
@@ -112,6 +245,7 @@ export const RecordList = ({
     recordsInfiniteQuery(client, prefix, {
       search: search || undefined,
       limit,
+      locale,
       sort: sort?.id,
       order: sort ? (sort.desc ? "desc" : "asc") : undefined,
     }),
@@ -133,6 +267,7 @@ export const RecordList = ({
               size: 104,
               header: () => <span className="sr-only">Actions</span>,
               enableSorting: false,
+              enableResizing: false,
               cell: ({ row }) => (
                 <div className="flex justify-end gap-1">
                   {canOn(
@@ -203,13 +338,40 @@ export const RecordList = ({
     manualSorting: true,
     enableMultiSort: false,
     // The row actions stay in view while the table scrolls sideways.
-    state: { sorting, columnPinning: { left: ["actions"] } },
+    state: {
+      sorting,
+      columnPinning: { left: ["actions"] },
+      columnSizing,
+      columnVisibility: Object.fromEntries(
+        (fixedColumns ? hiddenColumns : []).map((id) => [id, false]),
+      ),
+    },
     onSortingChange: setSorting,
+    enableColumnResizing: !!fixedColumns,
+    columnResizeMode: "onChange",
+    onColumnSizingChange: setColumnSizing,
   });
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <HeaderActions>
+        {fixedColumns && (
+          <ColumnsMenu
+            table={table}
+            hidden={hiddenColumns}
+            onChange={(next) => {
+              setHiddenColumns(next);
+              writeStored("columns", prefix, next);
+            }}
+            onReset={() => {
+              const initial = fixedColumns.hidden;
+
+              setHiddenColumns(initial);
+              setColumnSizing({});
+              writeStored("columns", prefix, initial);
+            }}
+          />
+        )}
         <Input
           type="search"
           aria-label="Search"
@@ -270,6 +432,7 @@ export const RecordList = ({
               : undefined
           }
           fetchingMore={records.isFetchingNextPage}
+          fixedLayout={!!fixedColumns}
         />
       )}
 

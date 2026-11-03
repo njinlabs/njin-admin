@@ -19,6 +19,27 @@ const listable: Form["type"][] = [
 export const isListable = ({ type }: Pick<Form, "type">) =>
   listable.includes(type);
 
+// How wide a column is drawn, by what it holds: a flag needs little, a text more. The list keeps
+// every row to one line, so these are widths to cut at ("…"), not to wrap at.
+export const columnSize = ({ type }: Pick<Form, "type">) =>
+  (
+    ({
+      boolean: 88,
+      numeric: 112,
+      datepicker: 120,
+      select: 144,
+      relation: 168,
+      file: 200,
+    }) as Partial<Record<Form["type"], number>>
+  )[type] ?? 240;
+
+// One line, cut with "…" where it is too long; the whole text is the tooltip.
+const Line = ({ children }: { children: string }) => (
+  <span className="block truncate" title={children}>
+    {children}
+  </span>
+);
+
 const Empty = () => <span className="text-muted-foreground">-</span>;
 
 // A relation comes expanded one level, so its label is a field of the related record.
@@ -67,12 +88,31 @@ export const renderCell = (
     case "numeric":
       return typeof value === "number" ? value.toLocaleString() : String(value);
     case "relation":
-      return relationLabel(value, form.labelKey);
+      return <Line>{relationLabel(value, form.labelKey)}</Line>;
     case "file": {
-      const name = (value as { name?: unknown }).name;
-      return typeof name === "string" && name ? name : <Empty />;
+      const { name, type, url } = value as {
+        name?: unknown;
+        type?: unknown;
+        url?: unknown;
+      };
+      if (typeof name !== "string" || !name) return <Empty />;
+
+      return (
+        <span className="flex items-center gap-2" title={name}>
+          {typeof type === "string" &&
+          type.startsWith("image/") &&
+          typeof url === "string" ? (
+            <img
+              src={url}
+              alt=""
+              className="size-6 shrink-0 rounded-control object-cover"
+            />
+          ) : null}
+          <span className="truncate">{name}</span>
+        </span>
+      );
     }
     default:
-      return String(value);
+      return <Line>{String(value)}</Line>;
   }
 };

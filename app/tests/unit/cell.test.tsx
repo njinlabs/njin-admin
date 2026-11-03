@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { renderToString } from "react-dom/server";
-import { isListable, renderCell } from "../../src/lib/cell";
+import { columnSize, isListable, renderCell } from "../../src/lib/cell";
 
 const html = (node: ReturnType<typeof renderCell>) =>
   renderToString(<>{node}</>);
@@ -39,16 +39,55 @@ describe("renderCell", () => {
 
     expect(
       html(renderCell({ type: "relation", labelKey: "slug" }, author)),
-    ).toBe("ada");
+    ).toContain(">ada<");
     // No label key: the first text field that is not the id.
-    expect(html(renderCell({ type: "relation" }, author))).toBe("Ada");
+    expect(html(renderCell({ type: "relation" }, author))).toContain(">Ada<");
     // Not expanded: the id is all there is.
-    expect(html(renderCell({ type: "relation" }, "a1"))).toBe("a1");
+    expect(html(renderCell({ type: "relation" }, "a1"))).toContain(">a1<");
   });
 
   test("a file shows its name", () => {
     expect(
       html(renderCell({ type: "file" }, { id: "f1", name: "cv.pdf" })),
-    ).toBe("cv.pdf");
+    ).toContain(">cv.pdf<");
+  });
+
+  test("a file that is an image shows a thumbnail beside its name", () => {
+    const file = { id: "f1", name: "a.png", type: "image/png", url: "/a.png" };
+    const withThumb = html(renderCell({ type: "file" }, file));
+
+    expect(withThumb).toContain('src="/a.png"');
+    expect(withThumb).toContain(">a.png<");
+    expect(
+      html(renderCell({ type: "file" }, { ...file, type: "application/pdf" })),
+    ).not.toContain("<img");
+  });
+
+  test("a text is one line, cut where it is long, with the whole of it as the tooltip", () => {
+    const text = html(renderCell({ type: "text" }, "A very long title"));
+
+    expect(text).toContain("truncate");
+    expect(text).toContain('title="A very long title"');
+  });
+
+  test("a localized field read in one language is its text; read in all, the first it has", () => {
+    const form = { type: "text" as const, localized: true };
+
+    expect(html(renderCell(form, "Halo"))).toContain(">Halo<");
+    expect(html(renderCell(form, { id: "", en: "Hello" }))).toContain(
+      ">Hello<",
+    );
+  });
+});
+
+describe("columnSize", () => {
+  test("gives a flag little room and a text the most", () => {
+    expect(columnSize({ type: "boolean" })).toBeLessThan(
+      columnSize({ type: "numeric" }),
+    );
+    expect(columnSize({ type: "numeric" })).toBeLessThan(
+      columnSize({ type: "text" }),
+    );
+    expect(columnSize({ type: "email" })).toBe(columnSize({ type: "text" }));
   });
 });
