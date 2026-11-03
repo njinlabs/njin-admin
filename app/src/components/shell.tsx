@@ -6,7 +6,7 @@ import { useState } from "react";
 import { PiList, PiX } from "react-icons/pi";
 import { client } from "../lib/client";
 import { mainNavs, navs, schemaNavs } from "../lib/registry";
-import { HeaderSlot, PageTitleContext } from "./header-slot";
+import { HeaderSlot, PageTitleContext, TitleSlot } from "./header-slot";
 import { useSession } from "./session";
 import { UserMenu } from "./user-menu";
 
@@ -105,6 +105,7 @@ const Nav = ({
 export const Shell = ({ user }: { user: Row }) => {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [titleSlot, setTitleSlot] = useState<HTMLElement | null>(null);
   const [pageTitle, setPageTitle] = useState<string | null>(null);
   const schema = useQuery(schemaQuery(client));
   const { permissions } = useSession();
@@ -180,14 +181,17 @@ export const Shell = ({ user }: { user: Row }) => {
             )}
             <span className="truncate">{title}</span>
           </h1>
+          <div ref={setTitleSlot} className="flex shrink-0 items-center" />
           <div ref={setSlot} className="ml-auto flex items-center gap-2" />
         </header>
         <PageTitleContext value={setPageTitle}>
           <HeaderSlot value={slot}>
-            {/* Padded, unless the page holds something that runs edge to edge (a table marks itself with data-bleed). */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 has-[[data-bleed]]:p-0 md:px-8 md:has-[[data-bleed]]:p-0">
-              <Outlet />
-            </div>
+            <TitleSlot value={titleSlot}>
+              {/* Padded, unless the page holds something that runs edge to edge (a table marks itself with data-bleed). */}
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 has-[[data-bleed]]:p-0 md:px-8 md:has-[[data-bleed]]:p-0">
+                <Outlet />
+              </div>
+            </TitleSlot>
           </HeaderSlot>
         </PageTitleContext>
       </main>

@@ -398,6 +398,13 @@ const FieldInput = ({
   />
 );
 
+// Fields that need the whole width: a text editor, a box of fields, a list, a row of chips or
+// thumbnails. The rest sit two to a row.
+const wide = (item: Item) =>
+  ["richtext", "object", "array", "multi_relation", "multi_file"].includes(
+    item.type,
+  );
+
 const Fields = ({
   items,
   prefix,
@@ -412,32 +419,43 @@ const Fields = ({
   control: Control<FieldValues>;
   disabled?: boolean;
 }) => (
-  <div className="space-y-5">
-    {items.map((item) => {
-      const path = prefix ? `${prefix}.${item.key}` : item.key;
+  // The columns follow the width of this box, not the screen's: a form beside a menu, or inside
+  // another box of fields, has less room than the window says.
+  <div className="@container">
+    <div className="grid grid-cols-1 items-start gap-5 @xl:grid-cols-2">
+      {items.map((item) => {
+        const path = prefix ? `${prefix}.${item.key}` : item.key;
+        const span = wide(item) ? "min-w-0 @xl:col-span-2" : "min-w-0";
 
-      if (item.localized && !locale) {
+        if (item.localized && !locale) {
+          return (
+            <div key={item.key} className={span}>
+              <Field>
+                <FieldLabel>{item.label}</FieldLabel>
+                <p className="text-sm text-muted-foreground">
+                  Needs a language to edit.
+                </p>
+              </Field>
+            </div>
+          );
+        }
+
         return (
-          <Field key={item.key}>
-            <FieldLabel>{item.label}</FieldLabel>
-            <p className="text-sm text-muted-foreground">
-              Needs a language to edit.
-            </p>
-          </Field>
-        );
-      }
-
-      return (
-        <FieldInput
           // A language is a different value, so it starts a fresh input.
-          key={item.localized ? `${item.key}.${locale}` : item.key}
-          item={item}
-          name={item.localized ? `${path}.${locale}` : path}
-          control={control}
-          disabled={disabled}
-        />
-      );
-    })}
+          <div
+            key={item.localized ? `${item.key}.${locale}` : item.key}
+            className={span}
+          >
+            <FieldInput
+              item={item}
+              name={item.localized ? `${path}.${locale}` : path}
+              control={control}
+              disabled={disabled}
+            />
+          </div>
+        );
+      })}
+    </div>
   </div>
 );
 

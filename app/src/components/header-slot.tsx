@@ -12,6 +12,15 @@ export const HeaderActions = ({ children }: { children: ReactNode }) => {
   return slot ? createPortal(children, slot) : null;
 };
 
+// The place right after the title, for a short mark about the page (a record's status).
+export const TitleSlot = createContext<HTMLElement | null>(null);
+
+export const TitleBadge = ({ children }: { children: ReactNode }) => {
+  const slot = use(TitleSlot);
+
+  return slot ? createPortal(children, slot) : null;
+};
+
 // The title in the header is the menu entry that owns the path. A page that is deeper than its
 // entry (a form under "Users") names itself with `PageTitle`; it goes back to the entry's label
 // when the page leaves.
