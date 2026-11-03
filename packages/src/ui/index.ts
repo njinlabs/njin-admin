@@ -5,6 +5,7 @@ export { Checkbox } from "./checkbox";
 export { cn } from "./cn";
 export { ConfirmDialog } from "./confirm-dialog";
 export { DatePicker, formatDate } from "./date-picker";
+export { Dialog } from "./dialog";
 export { Field, FieldDescription, FieldError, FieldLabel } from "./field";
 export { Input } from "./input";
 export { MultiSelect } from "./multi-select";

@@ -15,6 +15,7 @@ import {
 } from "react-icons/pi";
 import { ComponentsPage } from "../pages/components";
 import { ContentListPage } from "../pages/content-list";
+import { FilesPage } from "../pages/files";
 import { GroupFormPage } from "../pages/users/group-form";
 import { GroupsListPage } from "../pages/users/groups-list";
 import { UserFormPage } from "../pages/users/user-form";
@@ -54,8 +55,7 @@ const Dashboard = () => (
 export const routes = {
   main: [
     { path: "/", component: Dashboard },
-    // Dummy pages until the real ones exist.
-    { path: "/files", component: Dashboard },
+    { path: "/files", component: FilesPage },
     { path: "/users", component: UsersListPage },
     { path: "/users/new", component: UserFormPage },
     { path: "/users/$id/edit", component: UserFormPage },

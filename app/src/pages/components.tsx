@@ -5,6 +5,7 @@ import {
   Checkbox,
   ConfirmDialog,
   DatePicker,
+  Dialog,
   Field,
   FieldDescription,
   FieldError,
@@ -49,6 +50,7 @@ export const ComponentsPage = () => {
   const [invalidOn, setInvalidOn] = useState(false);
   const [date, setDate] = useState<string | undefined>();
   const [confirming, setConfirming] = useState(false);
+  const [windowOpen, setWindowOpen] = useState(false);
   const [agreed, setAgreed] = useState(true);
   const [chosen, setChosen] = useState<string[]>(["draft"]);
 
@@ -126,6 +128,20 @@ export const ComponentsPage = () => {
           variant="danger"
           onConfirm={() => setConfirming(false)}
         />
+      </Section>
+
+      <Section title="Dialog">
+        <Button onClick={() => setWindowOpen(true)}>Open a dialog</Button>
+        <Dialog
+          open={windowOpen}
+          onOpenChange={setWindowOpen}
+          title="A dialog"
+          footer={<Button onClick={() => setWindowOpen(false)}>Done</Button>}
+        >
+          <p className="text-sm text-muted-foreground">
+            Any content goes here; the footer holds the buttons.
+          </p>
+        </Dialog>
       </Section>
 
       <Section title="Skeleton">

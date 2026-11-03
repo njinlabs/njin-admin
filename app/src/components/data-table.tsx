@@ -1,7 +1,8 @@
 import { Skeleton } from "@njinlabs/njin-admin/ui";
 import { type Column, flexRender, type Table } from "@tanstack/react-table";
-import { type ReactNode, type RefObject, useEffect, useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { PiArrowDown, PiArrowUp, PiCaretUpDown } from "react-icons/pi";
+import { useEndReached } from "../lib/use-end-reached";
 
 const SortIcon = ({ sorted }: { sorted: false | "asc" | "desc" }) =>
   sorted === "asc" ? (
@@ -34,34 +35,6 @@ const fixed = (column: Column<any>) =>
     : undefined;
 
 const skeletonRows = [0, 1, 2, 3, 4];
-
-// Calls `onEnd` whenever the end of the scroll container is near. The observer is made again
-// when the number of rows changes, so a page that did not fill the container still asks for more.
-const useEndReached = (
-  root: RefObject<HTMLElement | null>,
-  enabled: boolean,
-  onEnd: (() => void) | undefined,
-  rows: number,
-) => {
-  const sentinel = useRef<HTMLDivElement>(null);
-  const callback = useRef(onEnd);
-  callback.current = onEnd;
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `rows` only restarts the observer.
-  useEffect(() => {
-    if (!enabled || !sentinel.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => entry?.isIntersecting && callback.current?.(),
-      { root: root.current, rootMargin: "200px" },
-    );
-    observer.observe(sentinel.current);
-
-    return () => observer.disconnect();
-  }, [root, enabled, rows]);
-
-  return sentinel;
-};
 
 // The rows of a TanStack table, drawn with the admin's tokens. Sorting, loading and the data
 // itself stay with the caller (the table is `manual*`, the server does the work); this shows

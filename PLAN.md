@@ -63,7 +63,12 @@ teruji sendiri.
 - [ ] **Content, sisanya**: filter di daftar, tombol Buat/Ubah dan form dari `model.form` dan `model.schema`,
       draft/publish, i18n per bahasa.
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
-- [ ] **Files**: pustaka berkas dan unggah.
+- [x] **Files** (`pages/files.tsx`, `components/file-manager.tsx`, `file-picker-dialog.tsx`): grid dengan cari dan infinite
+      scroll, unggah banyak berkas dengan panel progres, unduh, salin link, hapus (`ConfirmDialog`), semua mengikuti izin
+      `file`. Halaman Files dan pemilih adalah komponen yang sama (`FileManager`); `picker` menambah pilihan satu/banyak,
+      dan `FilePickerDialog` menahan pilihan sampai tombol Select. Kit bertambah: `Dialog`. `uploadFile` diperbaiki
+      (server membalas array satu elemen) dan melaporkan progres. Belum dicoba di browser. Pemilih belum dipasang di
+      form: `file`/`multi_file` di `RenderForm` menunggu `RenderForm` ada.
 - [x] **Users** (`pages/users/`): daftar user dan daftar access group dalam satu bagian (tab di `/users` dan
       `/users/groups`), form buat/ubah keduanya. Daftar memakai `RecordList` (diekstrak dari daftar konten). Form user:
       field group hanya muncul bila boleh `access_group:update` (server menolak bila tidak). Form group: `GrantsEditor`
