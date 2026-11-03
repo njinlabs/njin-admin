@@ -149,62 +149,70 @@ const transformType = (type: z.ZodType): z.ZodType => {
   return type;
 };
 
-export const transformSchema = (
-  existingSchema: z.ZodObject<any>,
-): z.ZodObject<any> => {
-  const newShape: { [x: string]: z.ZodType } = {};
+// What a localized field is: a map of locale to the value of one language. z.fromJSONSchema reads
+// it as an object whose catchall is the schema of one language, and the rebuilt one (below) as a
+// record; either way this is the schema of one language.
+const perLocaleOf = (value: z.ZodType): z.ZodType | undefined =>
+  value instanceof z.ZodRecord
+    ? (value.valueType as z.ZodType)
+    : (value as any)._zod.def.out?._zod.def.catchall;
 
-  for (const [key, value] of Object.entries(existingSchema.shape)) {
-    const {
-      type: original,
+const transformField = (value: z.ZodType): z.ZodType => {
+  const { type: original, withMeta, isOptional, isNullable } = unwrap(value);
+
+  const meta = (withMeta as any).meta?.();
+
+  // Each language is a field of its own, so a file picked in one is reduced to its id like any
+  // other, and the map is rebuilt around that.
+  const perLocale = meta?.localized && perLocaleOf(original);
+  if (perLocale) {
+    return rewrap(
+      z.record(z.string(), transformField(perLocale)).meta(meta),
       withMeta,
-      isOptional,
       isNullable,
-    } = unwrap(value as z.ZodType);
-
-    const meta = (withMeta as any).meta?.();
-
-    if (meta?.renderAs === "relation" || meta?.renderAs === "file") {
-      // The submitted value must always end up a plain id string regardless of how the
-      // backend declared the field (nested object vs. already a string) — `z.preprocess`
-      // coerces the raw picked value *before* validating it against the final target type,
-      // unlike `.transform()` which validates the raw input against the original type first.
-      const finalField: z.ZodType = z
-        .preprocess((val) => (val ? extractId(val) : val), z.string())
-        .meta(meta);
-
-      newShape[key] = rewrap(
-        finalField,
-        withMeta,
-        isNullable,
-        isOptional,
-        extractId,
-      );
-    } else if (
-      meta?.renderAs === "multi_relation" ||
-      meta?.renderAs === "multi_file"
-    ) {
-      const finalField: z.ZodType = z
-        .preprocess(
-          (val) => (Array.isArray(val) ? val.map(extractId) : val),
-          z.array(z.string()).check(...checksOf(original)),
-        )
-        .meta(meta);
-
-      newShape[key] = rewrap(
-        finalField,
-        withMeta,
-        isNullable,
-        isOptional,
-        (val) => (Array.isArray(val) ? val.map(extractId) : val),
-      );
-    } else {
-      newShape[key] = transformType(value as z.ZodType);
-    }
+      isOptional,
+    );
   }
 
-  return z.object(newShape);
+  if (meta?.renderAs === "relation" || meta?.renderAs === "file") {
+    // The submitted value must always end up a plain id string regardless of how the
+    // backend declared the field (nested object vs. already a string) — `z.preprocess`
+    // coerces the raw picked value *before* validating it against the final target type,
+    // unlike `.transform()` which validates the raw input against the original type first.
+    const finalField: z.ZodType = z
+      .preprocess((val) => (val ? extractId(val) : val), z.string())
+      .meta(meta);
+
+    return rewrap(finalField, withMeta, isNullable, isOptional, extractId);
+  }
+
+  if (meta?.renderAs === "multi_relation" || meta?.renderAs === "multi_file") {
+    const finalField: z.ZodType = z
+      .preprocess(
+        (val) => (Array.isArray(val) ? val.map(extractId) : val),
+        z.array(z.string()).check(...checksOf(original)),
+      )
+      .meta(meta);
+
+    return rewrap(finalField, withMeta, isNullable, isOptional, (val) =>
+      Array.isArray(val) ? val.map(extractId) : val,
+    );
+  }
+
+  return transformType(value);
 };
+
+export const transformSchema = (
+  existingSchema: z.ZodObject<any>,
+): z.ZodObject<any> =>
+  z.object(
+    Object.fromEntries(
+      Object.entries(existingSchema.shape).map(([key, value]) => [
+        key,
+        transformField(value as z.ZodType),
+      ]),
+    ),
+  );
 
 const parseArray = (input: z.ZodArray) => {
   const { type: elementType, withMeta } = unwrap(input.element as z.ZodType);
@@ -260,8 +268,7 @@ const toField = (key: string, rawValue: z.ZodType): Form => {
   // reads it as an object whose catchall is the schema of one language: that schema says how to
   // draw a language, the map only names the field.
   const perLocale =
-    (meta as { localized?: boolean }).localized &&
-    (value as any)._zod.def.out?._zod.def.catchall;
+    (meta as { localized?: boolean }).localized && perLocaleOf(value);
   if (perLocale) {
     return { ...toField(key, perLocale), label: meta.label, localized: true };
   }

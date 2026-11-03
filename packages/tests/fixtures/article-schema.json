@@ -88,6 +88,21 @@
       "label": "Featured?",
       "renderAs": "boolean",
       "type": "boolean"
+    },
+    "cover": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "label": "Cover",
+        "localized": true,
+        "renderAs": "file",
+        "model": "file",
+        "type": "string"
+      },
+      "label": "Cover",
+      "localized": true
     }
   },
   "required": [

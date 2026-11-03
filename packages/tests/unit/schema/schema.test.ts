@@ -280,6 +280,24 @@ describe("a model with i18n", () => {
     expect(by("isFeatured").localized).toBeUndefined();
   });
 
+  test("reduces a file picked in a language to its id", () => {
+    const ok = {
+      title: { id: "Halo" },
+      slug: { id: "halo" },
+      body: {},
+      faq: {},
+      isFeatured: false,
+    };
+    const parsed = schema.safeParse({
+      ...ok,
+      cover: { id: { id: "f1", name: "a.png" }, en: "f2" },
+    });
+
+    expect(by("cover")).toMatchObject({ type: "file", localized: true });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.cover).toEqual({ id: "f1", en: "f2" });
+  });
+
   test("validates each language the form sends", () => {
     const ok = {
       title: { id: "Halo", en: "Hello" },
