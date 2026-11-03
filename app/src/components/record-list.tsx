@@ -3,6 +3,7 @@ import {
   canOn,
   destroyRecordMutation,
   type Row,
+  readRecords,
   recordsInfiniteQuery,
   toApiError,
 } from "@njinlabs/njin-admin/sdk";
@@ -33,6 +34,7 @@ import {
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   PiColumns,
+  PiFunnel,
   PiMagnifyingGlass,
   PiPencilSimple,
   PiPlus,
@@ -41,8 +43,10 @@ import {
 } from "react-icons/pi";
 import { renderCell } from "../lib/cell";
 import { client } from "../lib/client";
+import { type FilterField, type FilterRule, toFilters } from "../lib/filters";
 import { useDebounced } from "../lib/use-debounced";
 import { DataTable } from "./data-table";
+import { FilterDialog } from "./filter-dialog";
 import { HeaderActions } from "./header-slot";
 import { useSession } from "./session";
 
@@ -129,10 +133,16 @@ const ColumnsMenu = ({
 }) => (
   <Popover>
     <PopoverTrigger
-      render={<Button variant="outline" aria-label="Columns" title="Columns" />}
+      render={
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Columns"
+          title="Columns"
+        />
+      }
     >
       <PiColumns />
-      <span className="hidden sm:inline">Columns</span>
     </PopoverTrigger>
     <PopoverContent align="end" className="max-h-80 w-56 overflow-y-auto p-3">
       <div className="space-y-2">
@@ -190,6 +200,8 @@ type RecordListProps = {
   fixedColumns?: { hidden: string[] };
   // The language the list is read in, for a model with i18n.
   locale?: string;
+  // What the list can be filtered by; without it there is no filter button.
+  filterFields?: FilterField[];
 };
 
 // The records of one model as a searchable, sortable table that loads page after page, with the
@@ -203,10 +215,13 @@ export const RecordList = ({
   keep,
   fixedColumns,
   locale,
+  filterFields,
 }: RecordListProps) => {
   const queryClient = useQueryClient();
   const { user, permissions } = useSession();
   const [searchText, setSearchText] = useState("");
+  const [rules, setRules] = useState<FilterRule[]>([]);
+  const [filtering, setFiltering] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [deleting, setDeleting] = useState<Row | null>(null);
   const [hiddenColumns, setHiddenColumns] = useState(() =>
@@ -240,10 +255,11 @@ export const RecordList = ({
   const search = useDebounced(searchText.trim());
   const [sort] = sorting;
 
-  // A new search or sort is a new query, so the list starts again from the first page.
+  // A new search, filter or sort is a new query, so the list starts again from the first page.
   const records = useInfiniteQuery(
     recordsInfiniteQuery(client, prefix, {
       search: search || undefined,
+      filters: rules.length > 0 ? toFilters(rules) : undefined,
       limit,
       locale,
       sort: sort?.id,
@@ -372,6 +388,23 @@ export const RecordList = ({
             }}
           />
         )}
+        {filterFields && filterFields.length > 0 && (
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Filter"
+            title="Filter"
+            className="relative"
+            onClick={() => setFiltering(true)}
+          >
+            <PiFunnel />
+            {rules.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 grid size-4 place-items-center rounded-full bg-primary text-[10px] leading-none text-primary-foreground">
+                {rules.length}
+              </span>
+            )}
+          </Button>
+        )}
         <Input
           type="search"
           aria-label="Search"
@@ -381,12 +414,35 @@ export const RecordList = ({
           className="w-40 sm:w-64"
         />
         {mayCreate && (
-          <Button render={<Link to={newPath} />} nativeButton={false}>
+          <Button
+            size="icon"
+            aria-label="New"
+            title="New"
+            render={<Link to={newPath} />}
+            nativeButton={false}
+          >
             <PiPlus />
-            <span className="hidden sm:inline">New</span>
           </Button>
         )}
       </HeaderActions>
+
+      {filterFields && (
+        <FilterDialog
+          open={filtering}
+          onOpenChange={setFiltering}
+          fields={filterFields}
+          rules={rules}
+          onApply={setRules}
+          locale={locale}
+          loadRelated={(related, text) =>
+            readRecords(client, related, {
+              search: text || undefined,
+              limit: 20,
+              locale,
+            }).then((page) => page.data)
+          }
+        />
+      )}
 
       {above}
 
@@ -397,14 +453,28 @@ export const RecordList = ({
           table={table}
           loading={records.isPending}
           empty={
-            search ? (
+            search || rules.length > 0 ? (
               <Empty
                 icon={<PiMagnifyingGlass />}
                 title="No results"
-                description={`Nothing in ${name} matches “${search}”.`}
+                description={
+                  search
+                    ? `Nothing in ${name} matches “${search}”${rules.length > 0 ? " and the filter" : ""}.`
+                    : `Nothing in ${name} matches the filter.`
+                }
               >
-                <Button variant="outline" onClick={() => setSearchText("")}>
-                  Clear search
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchText("");
+                    setRules([]);
+                  }}
+                >
+                  {search && rules.length > 0
+                    ? "Clear search and filter"
+                    : search
+                      ? "Clear search"
+                      : "Clear filter"}
                 </Button>
               </Empty>
             ) : (

@@ -14,7 +14,11 @@ export { MultiCombobox } from "./multi-combobox";
 export { MultiSelect } from "./multi-select";
 export { NumberInput } from "./number-input";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
-export type { LoadRelated, Related } from "./relation-input";
+export {
+  type LoadRelated,
+  type Related,
+  RelationInput,
+} from "./relation-input";
 export { hasInput, isWideField, RenderForm } from "./render-form";
 export { RichTextEditor } from "./rich-text-editor";
 export { Select, type SelectOption } from "./select";

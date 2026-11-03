@@ -70,11 +70,16 @@ teruji sendiri.
       tab bahasa (default, yang sudah terisi, dan "+ Add language"), semua bahasa disimpan sekaligus. Model `draftable`:
       status sebagai lencana di samping judul; tombol Cancel/Discard, Save, Unpublish, Publish (hanya ikon di mobile); Publish
       menyimpan dulu lalu menerbitkan semua bahasa. Layout dua kolom yang mengikuti lebar kotaknya. Belum dicoba di browser.
-- [ ] **Content, sisanya**: filter di daftar; info wajib/opsional dari schema (tanda bintang, teks kosong jangan dikirim `""`,
-      relation tunggal yang dikosongkan `null`); hapus satu bahasa (`removeLocaleMutation` sudah ada, tombolnya belum);
-      umpan balik setelah Save dan peringatan perubahan yang belum disimpan; urut ulang elemen array dan batas
-      `min`/`max` pada tombol Add; label `select` dari i18n; pembatasan jenis file per field (butuh info dari server);
-      kolom Status di daftar model draftable.
+- [x] **Content, filter dan status**: tombol filter (ikon corong, lencana jumlah aturan) di samping Columns membuka dialog;
+      tiap baris: field, operator sesuai tipe (`lib/filters.ts`), nilai (teks, angka, tanggal, pilihan, ya/tidak, relasi);
+      aturan pada satu field digabung jadi satu objek operator di `filters`. Model draftable punya kolom Status (lencana) dan
+      field filter Status; semua model punya filter Created. Tombol di header daftar kini hanya ikon.
+- [x] **Content, form**: tombol hapus satu bahasa (ikon sampah di ujung tab bahasa, dengan konfirmasi), umpan balik setelah Save
+      (ikon dan label berubah jadi "Saved" sebentar; record baru membawanya ke halaman edit lewat state router), dan
+      peringatan perubahan yang belum disimpan (`useBlocker` untuk tautan/kembali, `beforeunload` untuk tab). Belum dicoba di browser.
+- [ ] **Content, sisanya**: info wajib/opsional dari schema (tanda bintang, teks kosong jangan dikirim `""`,
+      relation tunggal yang dikosongkan `null`); urut ulang elemen array dan batas
+      `min`/`max` pada tombol Add; label `select` dari i18n; pembatasan jenis file per field (butuh info dari server).
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
 - [x] **Files** (`pages/files.tsx`, `components/file-manager.tsx`, `file-picker-dialog.tsx`): grid dengan cari dan infinite
       scroll, unggah banyak berkas dengan panel progres, unduh, salin link, hapus (`ConfirmDialog`), semua mengikuti izin

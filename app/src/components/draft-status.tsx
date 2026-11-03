@@ -46,3 +46,16 @@ export const StatusBadge = ({ record }: { record: Row }) => {
     </TitleBadge>
   );
 };
+
+// The status in a list cell: the same badge, without the header slot.
+export const StatusCell = ({ record }: { record: Row }) => {
+  const status = overallStatus(record);
+
+  if (!status) return <span className="text-muted-foreground">-</span>;
+
+  return (
+    <Badge variant={status === "published" ? "primary" : "default"}>
+      {statusLabels[status]}
+    </Badge>
+  );
+};

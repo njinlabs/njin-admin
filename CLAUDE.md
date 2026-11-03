@@ -163,6 +163,11 @@ a field a newer server adds is left alone rather than blocking the save.
 - The list (`content-list.tsx`) draws every column of the model with a width by field type (`columnSize`), one line cut
   with "…", the first text taking the room left; columns can be dragged and hidden (menu "Columns"), both kept per model
   in `localStorage`. A model with i18n is read in the default language.
+- Header buttons of the list and form are icon-only (label as `aria-label`/`title`). The list's filter is a dialog
+  (`components/filter-dialog.tsx`, rules in `lib/filters.ts`): field, operator by field type, value; rules on one field
+  become one `filters[field][$op]` object, a rule with no value is not sent. A draftable model also has a Status column and
+  filter. The form warns before leaving with unsaved edits (`useBlocker`; set `leaving` before navigating after a create),
+  shows "Saved" on the Save button, and removes one language from the tab bar (`removeLocaleMutation`).
 - Loading looks like what is loading: `FormSkeleton` follows the model's fields and the grid, `TableSkeleton` the list;
   both hold the header buttons in place. Do not use a single block.
 - `FieldError` works with or without a `Field` around it, so a message about the whole form (a failed request) can use it.

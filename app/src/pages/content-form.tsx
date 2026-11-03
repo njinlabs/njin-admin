@@ -10,6 +10,7 @@ import {
   type Row,
   readRecords,
   recordQuery,
+  removeLocaleMutation,
   schemaQuery,
   toApiError,
   updateRecordMutation,
@@ -27,14 +28,22 @@ import {
   RenderForm,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
-import { type ReactNode, useState } from "react";
+import {
+  Link,
+  useBlocker,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   PiArrowCounterClockwise,
+  PiCheck,
   PiEyeSlash,
   PiFloppyDisk,
   PiPaperPlaneTilt,
+  PiTrash,
   PiX,
 } from "react-icons/pi";
 import { overallStatus, StatusBadge } from "../components/draft-status";
@@ -158,10 +167,15 @@ const ModelForm = ({
   const move = useMutation(
     draftActionMutation(client, queryClient, model.prefix),
   );
+  const dropLocale = useMutation(
+    removeLocaleMutation(client, queryClient, model.prefix),
+  );
   const [discarding, setDiscarding] = useState(false);
   const [unpublishing, setUnpublishing] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
   const saving = create.isPending || update.isPending || move.isPending;
-  const failure = create.error ?? update.error ?? move.error;
+  const failure =
+    create.error ?? update.error ?? move.error ?? dropLocale.error;
   const error = failure && toApiError(failure);
 
   // A refused field that has no input here cannot be shown under it, so it goes in the message.
@@ -176,6 +190,44 @@ const ModelForm = ({
       ? canOn(permissions, model.prefix, "publish", record, user.id)
       : !!can(permissions, model.prefix, "publish"));
   const dirty = form.formState.isDirty;
+
+  // Shown for a moment after a save; a new record arrives from its creation with it already set.
+  const arrivedSaved = useLocation({
+    select: (location) => !!(location.state as { saved?: boolean }).saved,
+  });
+  const [saved, setSaved] = useState(arrivedSaved);
+  useEffect(() => {
+    if (!saved) return;
+
+    const timer = setTimeout(() => setSaved(false), 2500);
+
+    return () => clearTimeout(timer);
+  }, [saved]);
+
+  // Leaving with edits that are not saved asks first: in the app (a link, back) and the tab itself.
+  // Not after a save that is on its way to the new record's page.
+  const leaving = useRef(false);
+  const blocker = useBlocker({
+    shouldBlockFn: () => dirty && !leaving.current,
+    enableBeforeUnload: () => dirty && !leaving.current,
+    withResolver: true,
+  });
+
+  // Takes a language off the tabs and out of the form's values, so it is not saved back.
+  const dropFromForm = (code: string) => {
+    for (const key of localized) {
+      const { [code]: _, ...rest } = (form.getValues(key) ?? {}) as Record<
+        string,
+        unknown
+      >;
+
+      form.setValue(key, rest, { shouldDirty: false });
+    }
+    setAdded(added.filter((item) => item !== code));
+    setLocale(i18n?.defaultLocale);
+    setRemoving(null);
+    dropLocale.reset();
+  };
 
   // Saves every language, and with `publish` sends them all live. What has not changed is not
   // saved again.
@@ -215,8 +267,15 @@ const ModelForm = ({
 
       // A new record goes on to its own page; an edit stays, with the saved values as what is not
       // yet changed.
-      if (record) form.reset(form.getValues());
-      else navigate({ to: `${basePath}/${saved.id}/edit` as string });
+      form.reset(form.getValues());
+      if (record) setSaved(true);
+      else {
+        leaving.current = true;
+        navigate({
+          to: `${basePath}/${saved.id}/edit` as string,
+          state: { saved: true } as never,
+        });
+      }
     });
 
   return (
@@ -244,8 +303,14 @@ const ModelForm = ({
           />
         )}
         <ActionButton
-          icon={<PiFloppyDisk />}
-          label={create.isPending || update.isPending ? "Saving…" : "Save"}
+          icon={saved ? <PiCheck /> : <PiFloppyDisk />}
+          label={
+            create.isPending || update.isPending
+              ? "Saving…"
+              : saved
+                ? "Saved"
+                : "Save"
+          }
           type="submit"
           form="content-form"
           variant={mayPublish ? "outline" : "default"}
@@ -340,6 +405,20 @@ const ModelForm = ({
               </PopoverContent>
             </Popover>
           )}
+          {locale && locale !== i18n?.defaultLocale && (
+            <Button
+              type="button"
+              variant="danger-ghost"
+              size="icon"
+              className="ml-auto size-8 shrink-0"
+              aria-label={`Remove ${locale}`}
+              title={`Remove ${locale}`}
+              disabled={saving || dropLocale.isPending}
+              onClick={() => setRemoving(locale)}
+            >
+              <PiTrash />
+            </Button>
+          )}
         </div>
       )}
 
@@ -379,6 +458,67 @@ const ModelForm = ({
             </FieldError>
           )}
       </form>
+
+      <ConfirmDialog
+        open={blocker.status === "blocked"}
+        onOpenChange={(open) => {
+          if (!open) blocker.reset?.();
+        }}
+        title="Leave without saving?"
+        description="You have changes that are not saved. They are lost if you leave."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        variant="danger"
+        onConfirm={() => blocker.proceed?.()}
+      />
+
+      <ConfirmDialog
+        open={removing !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRemoving(null);
+            dropLocale.reset();
+          }
+        }}
+        title={`Remove ${removing ?? "this language"}?`}
+        description={
+          dropLocale.isError
+            ? toApiError(dropLocale.error).message
+            : "Everything written in this language is deleted for good, live copy included. Unsaved edits to it are lost too."
+        }
+        confirmLabel={dropLocale.isPending ? "Removing…" : "Remove"}
+        pending={dropLocale.isPending}
+        variant="danger"
+        onConfirm={() => {
+          const code = removing;
+
+          if (!code) return;
+
+          // A language only added here, and not saved yet, is not on the server to delete.
+          if (!record || !has(code)) {
+            dropFromForm(code);
+            return;
+          }
+
+          dropLocale.mutate(
+            { id: record.id, locale: code },
+            {
+              onSuccess: () => {
+                const fresh = queryClient.getQueryData<Row>(
+                  recordQuery(client, model.prefix, record.id).queryKey,
+                );
+
+                // The record without the language is what is not yet changed; what else was
+                // edited stays as it is.
+                form.reset(valuesOf(fresh ?? record), {
+                  keepDirtyValues: true,
+                });
+                dropFromForm(code);
+              },
+            },
+          );
+        }}
+      />
 
       <ConfirmDialog
         open={unpublishing}
