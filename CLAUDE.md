@@ -130,6 +130,43 @@ settings group, `{ ...item, form, schema }`: `form` (from `toForm`) lists the in
 field list, a hand-written validator) next to it. Fixing it is fine, but keep the change small, explain it, and test it
 against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAdminSchema` in njin core).
 
+## The content form
+
+`app/src/pages/content-form.tsx` (`/content/$prefix/new` and `/content/$prefix/$id/edit`) draws a model with
+`RenderForm` (`packages/src/ui/render-form.tsx`), the glue from `model.form` to the kit. All 13 field types of the schema have
+an input; `hasInput` says so, and the page validates and sends only the fields that have one (`model.schema.pick`), so
+a field a newer server adds is left alone rather than blocking the save.
+
+- `RenderForm` takes `form`, `control` (from `useForm`, with the zod resolver of `model.schema`), `locale`, and what only
+  the app can give: `loadRelated(model, search)` (relations are searched on the server, 250 ms after typing stops),
+  `filePicker` (`FilePickerDialog`) and `imageSrc` (the optimized `/img?url=` address an image is written into a text
+  with). Without them the relation, file and image parts say what they need instead of disappearing.
+- A relation or file is held in the form as the record that was picked (so its label can be shown) and the schema
+  reduces it to the id when it validates. Object and array fields recurse; elements are kept by position in the array
+  value, not with `useFieldArray` (it does not take a list of plain values).
+- The layout is a grid whose columns follow the width of its own box (`@container`): two where there is room, the
+  fields of `isWideField` (richtext, object, array, `multi_relation`, `multi_file`) across both.
+- Rich text (`RichTextEditor`, TipTap) is the old admin's: StarterKit with Image, a link popover (title, new tab,
+  nofollow), images chosen in the file picker (images only) with alt text required, and optimized sources.
+- A field with a value per language (`localized`) comes from the server as a map `{ locale: value }`, which
+  `z.fromJSONSchema` reads as an object whose catchall is the schema of one language. `toForm` returns it as the field of
+  one language with `localized: true`; `transformSchema` rebuilds the map around the transformed field of one language
+  (so a file picked in a language is reduced to its id). The form edits one language at a time (`locale`) and **always
+  saves all of them in one request**: tabs show the default language, the ones the record already has and the ones added
+  with "+ Add language"; a language left empty is not sent.
+- Drafts (`draftable` models): one status for the record as a whole (`overallStatus`: all live, none live, or in between =
+  unpublished changes), shown as a badge beside the title (`StatusBadge` into the header's `TitleSlot`). Buttons, in this
+  order: Cancel (or Discard when there are unpublished changes) and Save, then Unpublish and Publish. **Publish saves
+  first and sends every language live; Discard and Unpublish also act on every language.** They follow the `publish`
+  permission. Save stays on the page for a record and goes to the new record's page after creating one. On a phone the
+  header buttons show only their icon.
+- The list (`content-list.tsx`) draws every column of the model with a width by field type (`columnSize`), one line cut
+  with "…", the first text taking the room left; columns can be dragged and hidden (menu "Columns"), both kept per model
+  in `localStorage`. A model with i18n is read in the default language.
+- Loading looks like what is loading: `FormSkeleton` follows the model's fields and the grid, `TableSkeleton` the list;
+  both hold the header buttons in place. Do not use a single block.
+- `FieldError` works with or without a `Field` around it, so a message about the whole form (a failed request) can use it.
+
 ## The UI kit
 
 `packages/src/ui/`, exported as `@njinlabs/njin-admin/ui`. Built on Base UI (`@base-ui/react`) with `cva` for variants and
@@ -140,7 +177,8 @@ against the server's real schemas (`tests/fixtures/*-schema.json`, made by `toAd
   in light mode and 300 in dark mode.
 - One file per component, API kept flat and small (`Select` takes `options`, not compound parts). The kit knows nothing
   of react-hook-form: its inputs are controlled, and `FieldError` takes `errors={[fieldState.error]}` structurally.
-  The glue from `Form` (the schema's field list) to the kit belongs in `RenderForm`.
+  The glue from `Form` (the schema's field list) to the kit belongs in `RenderForm`, the one part of the kit that uses
+  react-hook-form (`Controller`), so a plugin that builds its own form must use the admin's copy of it.
 - Reach for the kit's component and its variants before writing classes by hand in the admin: a destructive menu item
   is `Button variant="danger-ghost"`, not a `<button>` coloured with `text-danger`, so colours stay in one place.
   `ConfirmDialog` is the yes/no before something is done; `Skeleton` is the loading placeholder.

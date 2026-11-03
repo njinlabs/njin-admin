@@ -19,7 +19,7 @@ bun install
 bun run dev   # http://localhost:5173/_admin/
 ```
 
-`/api` and `/uploads` are forwarded to the njin server (`VITE_API_URL`, default
+`/api`, `/img` and `/uploads` are forwarded to the njin server (`VITE_API_URL`, default
 `http://localhost:3000`).
 
 Plugins are listed by the njin server at `GET /api/admin/manifest` (not built in core yet). Until it is, the admin

@@ -16,7 +16,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
 - [x] Shell: layout dengan sidebar dari `navs`, judul halaman, token desain pertama dan mode gelap lewat
       `prefers-color-scheme` (`app/src/components/shell.tsx`, `theme.css`).
-- [x] Biome, 139 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Biome, 167 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
 - [x] Repo di GitHub (`njinlabs/njin-admin`, public), `LICENSE`, dan CI (biome, typecheck, tes, build admin).
 
 ## Belum terbukti
@@ -37,8 +37,11 @@ Murni logika, tidak butuh UI, dan dipakai semua halaman nanti.
 - [x] **Dua celah di `schema.ts` lama ditutup**: kolom `nullable` (union tanpa meta dari `anyOf [X, null]`) dan
       `minItems`/`maxItems` (array dibangun ulang tanpa aturan panjangnya). Perbaikan kecil di `unwrap` dan `transformType`,
       dengan tes terhadap schema asli server.
-- [ ] **Sambungkan ke form** (dikerjakan bersama halaman form): `getDefaultValues(model.schema)` untuk nilai awal,
-      `model.schema` sebagai validator form, `toApiError(...).fields` untuk menampilkan error server per field.
+- [x] **Sambungkan ke form**: `getDefaultValues(model.schema)` untuk nilai awal, `model.schema` (dipilih ke field yang punya
+      input) sebagai validator form, `toApiError(...).fields` untuk error server per field.
+- [x] **Field per bahasa (`localized`)**: server mengirimnya sebagai peta bahasa ke nilai; `toForm` membacanya sebagai
+      field satu bahasa (`localized: true`) dan `transformSchema` membangun ulang peta itu, jadi file yang dipilih di satu
+      bahasa diluruskan ke id. Dengan tes terhadap schema Article (`tests/fixtures/article-schema.json`).
 - [x] **Normalisasi error API**: `toApiError` (pesan, status, error per field dari 422 dan 409).
 - [x] **Endpoint yang belum dibungkus**: file (`uploadFile`), analytics (`getAnalytics`), setup. Users dan daftar/hapus file
       memakai `modelApi(client, "user")` / `modelApi(client, "file")`.
@@ -59,16 +62,26 @@ teruji sendiri.
 - [x] **Content, daftar** (`pages/content-list.tsx`, `components/data-table.tsx`, `lib/cell.tsx`): TanStack Table v8 dengan
       urut dan cari dari server (`manualSorting`, `recordsInfiniteQuery`), infinite scroll di dalam tabel yang memenuhi
       area konten, kolom dari `model.form` (tipe skalar), hapus lewat `ConfirmDialog`. Search dan tombol New ada di
-      header Shell lewat `HeaderActions` (portal ke `HeaderSlot`). Belum dicoba di browser.
-- [ ] **Content, sisanya**: filter di daftar, tombol Buat/Ubah dan form dari `model.form` dan `model.schema`,
-      draft/publish, i18n per bahasa.
+      header Shell lewat `HeaderActions` (portal ke `HeaderSlot`). Lebar kolom per tipe field (`columnSize`) dengan satu baris dan
+      "…" bila terlalu panjang, kolom teks pertama menyerap sisa ruang, kolom bisa diseret dan dipilih (menu "Columns"),
+      keduanya disimpan per model di browser; thumbnail di sel file; model i18n dibaca dengan bahasa default; skeleton yang
+      mengikuti bentuk daftar. Belum dicoba di browser.
+- [x] **Content, form Buat/Ubah** (`pages/content-form.tsx`, `RenderForm`): semua 13 tipe field punya input. Model i18n:
+      tab bahasa (default, yang sudah terisi, dan "+ Add language"), semua bahasa disimpan sekaligus. Model `draftable`:
+      status sebagai lencana di samping judul; tombol Cancel/Discard, Save, Unpublish, Publish (hanya ikon di mobile); Publish
+      menyimpan dulu lalu menerbitkan semua bahasa. Layout dua kolom yang mengikuti lebar kotaknya. Belum dicoba di browser.
+- [ ] **Content, sisanya**: filter di daftar; info wajib/opsional dari schema (tanda bintang, teks kosong jangan dikirim `""`,
+      relation tunggal yang dikosongkan `null`); hapus satu bahasa (`removeLocaleMutation` sudah ada, tombolnya belum);
+      umpan balik setelah Save dan peringatan perubahan yang belum disimpan; urut ulang elemen array dan batas
+      `min`/`max` pada tombol Add; label `select` dari i18n; pembatasan jenis file per field (butuh info dari server);
+      kolom Status di daftar model draftable.
 - [ ] **Settings**: halaman grup vars (baca, ubah, draft/publish, i18n).
 - [x] **Files** (`pages/files.tsx`, `components/file-manager.tsx`, `file-picker-dialog.tsx`): grid dengan cari dan infinite
       scroll, unggah banyak berkas dengan panel progres, unduh, salin link, hapus (`ConfirmDialog`), semua mengikuti izin
       `file`. Halaman Files dan pemilih adalah komponen yang sama (`FileManager`); `picker` menambah pilihan satu/banyak,
       dan `FilePickerDialog` menahan pilihan sampai tombol Select. Kit bertambah: `Dialog`. `uploadFile` diperbaiki
-      (server membalas array satu elemen) dan melaporkan progres. Belum dicoba di browser. Pemilih belum dipasang di
-      form: `file`/`multi_file` di `RenderForm` menunggu `RenderForm` ada.
+      (server membalas array satu elemen) dan melaporkan progres. Pemilih sudah dipasang di form (`file`/`multi_file`) dan di
+      editor richtext (hanya gambar); dalam pemilih grid-nya paling banyak 4 kolom. Belum dicoba di browser.
 - [x] **Users** (`pages/users/`): daftar user dan daftar access group dalam satu bagian (tab di `/users` dan
       `/users/groups`), form buat/ubah keduanya. Daftar memakai `RecordList` (diekstrak dari daftar konten). Form user:
       field group hanya muncul bila boleh `access_group:update` (server menolak bila tidak). Form group: `GrantsEditor`
@@ -77,7 +90,8 @@ teruji sendiri.
       sebagai badge dan ikut tersimpan (`splitGrants`/`joinGrants` di `sdk/api/grants.ts`). Kit bertambah: `Badge`,
       `Checkbox`, `MultiSelect`. Belum dicoba di browser.
 - [ ] **Analytics** dan **Dashboard**.
-- [ ] Editor richtext (TipTap, konfigurasi dari admin lama) dan pemilih relasi/file.
+- [x] Editor richtext (TipTap, konfigurasi dari admin lama, gambar lewat pemilih file dengan alt dan sumber teroptimasi
+      lewat `/img`) dan pemilih relasi/file di form. Belum dicoba di browser.
 
 ## 3. Kontrak plugin
 
@@ -106,11 +120,13 @@ Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
 - [x] Item menu aktif di sidebar memakai warna `primary` (bukan abu-abu) supaya jelas terlihat.
 - [ ] Belum dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, `ConfirmDialog`, popover menu user,
       mode gelap kit.
-- [ ] **Yang tidak butuh API**, urutan: `RenderForm` (text, email, numeric, boolean, select, datepicker, object, array;
-      butuh `react-hook-form` dan `react-number-format`), lalu `RichTextEditor` (TipTap).
-- [ ] **Yang butuh API (ditunda)**: `Combobox` untuk relation/multi_relation, `Dialog` umum dan pemilih file
-      (`file`/`multi_file`), lalu bagian relation dan file di `RenderForm`.
-- [ ] Komponen halaman (tabel data, paginasi, toast) saat halaman yang memakainya dikerjakan.
+- [x] **`RenderForm`** (semua tipe: text, email, numeric, boolean, select, datepicker, object, array, relation,
+      multi_relation, file, multi_file, richtext; `react-hook-form` dan `react-number-format`) dan **`RichTextEditor`** (TipTap).
+      Kit bertambah: `NumberInput`, `Combobox`, `MultiCombobox`, `RelationInput`, `FileInput`, `RichTextEditor`. Relation
+      dicari di server (`loadRelated`, jeda 250 ms), pemilih file dan alamat gambar diberikan app (`filePicker`, `imageSrc`).
+      `FieldError` bisa berdiri di luar `Field`. Popup `Select`/`MultiSelect` tidak lagi bergeser ke item terpilih.
+- [x] **Komponen halaman**: tabel data (kolom lebar tetap, seret, pilih kolom), skeleton form dan tabel, lencana status di
+      judul (`TitleSlot`). Paginasi lewat infinite scroll; toast belum ada.
 - [ ] Token final dan dokumentasi kit untuk penulis plugin.
 
 ## 5. Auth dan sesi
@@ -137,7 +153,7 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
       `Protected` bersama user sebelum halaman mana pun tampil, lalu dibaca lewat `useSession()`. `can`, `canList` dan
       `canOn` (untuk satu baris, baris sendiri pada level `own`) ada di `sdk/api/permissions.ts`.
 - [ ] Menu dan tombol mengikuti izin: sudah di menu (Content, Settings, Files, Users) dan daftar konten (New, Edit, Hapus,
-      empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Tinggal form konten, publish, halaman Settings/Files.
+      empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Form konten dan publish sudah mengikuti izin; tinggal halaman Settings.
 - [ ] Hook izin untuk plugin (sdk hanya
       punya fungsi murni; `useSession` ada di admin dan belum dibagi).
 
@@ -166,12 +182,12 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 ## Urutan yang disarankan
 
 1. ~~Cek di browser~~ dan ~~lapisan data (1)~~: selesai.
-2. ~~Sidebar dari `useQuery(schemaQuery)`~~: selesai. Lanjut Content (2): daftar record dan form dari
-   `model.form`/`model.schema`.
+2. ~~Sidebar dari `useQuery(schemaQuery)`~~ dan ~~Content: daftar, form, draft/publish, i18n~~: selesai (sisanya di
+   "Content, sisanya"). Lanjut Settings: form yang sama dengan model, satu record per grup.
 4. Kontrak plugin (3) sebelum plugin pihak ketiga pertama.
 5. Integrasi core (6) dan sisa auth (5): 401, izin.
 6. Settings, Files, Users, Analytics.
-7. Kit UI (4) berjalan paralel: `RenderForm` dan `RichTextEditor` dulu; komponen yang butuh API menyusul.
+7. Kit UI (4) berjalan paralel; `RenderForm` dan `RichTextEditor` sudah selesai.
 
 ## Catatan teknis yang perlu diingat
 
