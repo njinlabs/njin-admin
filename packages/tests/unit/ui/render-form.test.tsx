@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderToString } from "react-dom/server";
 import { useForm } from "react-hook-form";
 import type { Form } from "../../../src/sdk/schema";
-import { hasInput, RenderForm } from "../../../src/ui";
+import { hasInput, isWideField, RenderForm } from "../../../src/ui";
 
 const Demo = ({ form }: { form: Form[] }) => {
   const { control } = useForm({
@@ -208,6 +208,20 @@ describe("RenderForm", () => {
     );
 
     expect(html).toContain("Needs a source");
+  });
+
+  test("the editor, lists and boxes of fields take the whole width", () => {
+    for (const type of [
+      "richtext",
+      "object",
+      "array",
+      "multi_relation",
+    ] as const) {
+      expect(isWideField({ type })).toBe(true);
+    }
+    for (const type of ["text", "numeric", "boolean", "select"] as const) {
+      expect(isWideField({ type })).toBe(false);
+    }
   });
 
   test("has an input for a text with formatting", () => {

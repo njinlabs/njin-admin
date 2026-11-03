@@ -400,7 +400,7 @@ const FieldInput = ({
 
 // Fields that need the whole width: a text editor, a box of fields, a list, a row of chips or
 // thumbnails. The rest sit two to a row.
-const wide = (item: Item) =>
+export const isWideField = (item: Pick<Form, "type">) =>
   ["richtext", "object", "array", "multi_relation", "multi_file"].includes(
     item.type,
   );
@@ -425,7 +425,7 @@ const Fields = ({
     <div className="grid grid-cols-1 items-start gap-5 @xl:grid-cols-2">
       {items.map((item) => {
         const path = prefix ? `${prefix}.${item.key}` : item.key;
-        const span = wide(item) ? "min-w-0 @xl:col-span-2" : "min-w-0";
+        const span = isWideField(item) ? "min-w-0 @xl:col-span-2" : "min-w-0";
 
         if (item.localized && !locale) {
           return (

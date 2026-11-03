@@ -15,7 +15,7 @@ export { MultiSelect } from "./multi-select";
 export { NumberInput } from "./number-input";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export type { LoadRelated, Related } from "./relation-input";
-export { hasInput, RenderForm } from "./render-form";
+export { hasInput, isWideField, RenderForm } from "./render-form";
 export { RichTextEditor } from "./rich-text-editor";
 export { Select, type SelectOption } from "./select";
 export { Skeleton } from "./skeleton";

@@ -17,12 +17,12 @@ import {
   FieldLabel,
   Input,
   MultiSelect,
-  Skeleton,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
+import { FormSkeleton } from "../../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../../components/header-slot";
 import { PasswordInput } from "../../components/password-input";
 import { useSession } from "../../components/session";
@@ -217,7 +217,19 @@ export const UserFormPage = () => {
   }
   if (!id) return <UserForm />;
 
-  if (record.isPending) return <Skeleton className="h-64 w-full max-w-xl" />;
+  if (record.isPending) {
+    return (
+      <FormSkeleton
+        className="max-w-xl"
+        form={[
+          { type: "text" },
+          { type: "text" },
+          { type: "text" },
+          { type: "multi_relation" },
+        ]}
+      />
+    );
+  }
   if (record.isError) {
     return <LoadError what="The user" onRetry={() => record.refetch()} />;
   }

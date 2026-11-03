@@ -16,12 +16,12 @@ import {
   FieldError,
   FieldLabel,
   Input,
-  Skeleton,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
+import { FormSkeleton } from "../../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../../components/header-slot";
 import { useSession } from "../../components/session";
 import { client } from "../../lib/client";
@@ -174,7 +174,12 @@ export const GroupFormPage = () => {
     return <NoAccess what="this page" />;
   }
   if (catalog.isPending || (id && record.isPending)) {
-    return <Skeleton className="h-64 w-full max-w-3xl" />;
+    return (
+      <FormSkeleton
+        className="max-w-3xl"
+        form={[{ type: "text" }, { type: "object" }, { type: "object" }]}
+      />
+    );
   }
   if (catalog.isError) {
     return (

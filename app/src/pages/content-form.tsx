@@ -25,7 +25,6 @@ import {
   PopoverContent,
   PopoverTrigger,
   RenderForm,
-  Skeleton,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
@@ -40,6 +39,7 @@ import {
 } from "react-icons/pi";
 import { overallStatus, StatusBadge } from "../components/draft-status";
 import { FilePickerDialog } from "../components/file-picker-dialog";
+import { FormSkeleton } from "../components/form-skeleton";
 import { HeaderActions, PageTitle } from "../components/header-slot";
 import { ListError } from "../components/record-list";
 import { useSession } from "../components/session";
@@ -458,7 +458,7 @@ export const ContentFormPage = () => {
     enabled: !!id,
   });
 
-  if (schema.isPending) return <Skeleton className="h-64 w-full" />;
+  if (schema.isPending) return <FormSkeleton />;
   if (schema.isError) return <ListError onRetry={() => schema.refetch()} />;
   if (!model) return <p className="text-muted-foreground">No such model.</p>;
   if (!can(permissions, prefix, id ? "update" : "create")) {
@@ -467,7 +467,15 @@ export const ContentFormPage = () => {
   if (!id)
     return <ModelForm key={prefix} model={model} i18n={schema.data.i18n} />;
 
-  if (record.isPending) return <Skeleton className="h-64 w-full" />;
+  if (record.isPending) {
+    return (
+      <FormSkeleton
+        form={model.form.filter(hasInput)}
+        tabs={!!schema.data.i18n && model.form.some((item) => item.localized)}
+        actions={model.draftable ? 4 : 2}
+      />
+    );
+  }
   if (record.isError) return <ListError onRetry={() => record.refetch()} />;
   if (!record.data) {
     return <p className="text-muted-foreground">No such record.</p>;
