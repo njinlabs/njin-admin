@@ -23,6 +23,9 @@ export type Form = {
   model?: string;
   labelKey?: string;
   unique?: boolean;
+  // A field of a model with i18n that has a value per language. `type` and the rest describe the
+  // value of one language; the field itself is a map of locale to that value.
+  localized?: boolean;
 };
 
 // `z.fromJSONSchema` reads `anyOf: [X, { type: "null" }]`, which is how a nullable field is written,
@@ -243,48 +246,58 @@ export const getDefaultValues = (
   return defaults;
 };
 
-export const toForm = <const T extends Readonly<{ [x: string]: z.ZodType }>>(
-  input: z.ZodObject<T>,
-) => {
-  const forms: Form[] = [];
+const toField = (key: string, rawValue: z.ZodType): Form => {
+  const { type: value, withMeta } = unwrap(rawValue);
+  const meta: {
+    label: string;
+    renderAs: Form["type"];
+    model?: string;
+    labelKey?: string;
+    unique?: boolean;
+  } = (withMeta as any).meta() as any;
 
-  for (const [key, rawValue] of Object.entries(input.shape)) {
-    const { type: value, withMeta } = unwrap(rawValue as z.ZodType);
-    const meta: {
-      label: string;
-      renderAs: Form["type"];
-      model?: string;
-      labelKey?: string;
-      unique?: boolean;
-    } = (withMeta as any).meta() as any;
-    const form: Form = {
-      type: meta.renderAs,
-      label: meta.label,
-      key,
-      unique: meta.unique,
-    };
-
-    if (
-      value.type === "object" &&
-      form.type !== "relation" &&
-      form.type !== "file"
-    ) {
-      form.members = toForm(value as z.ZodObject);
-    } else if (
-      value.type === "array" &&
-      meta.renderAs !== "multi_relation" &&
-      meta.renderAs !== "multi_file"
-    ) {
-      form.element = parseArray(value as z.ZodArray);
-    } else if (value.type === "enum") {
-      form.options = (value as z.ZodEnum).enum;
-    } else if (form.type === "relation" || form.type === "multi_relation") {
-      form.model = meta.model;
-      form.labelKey = meta.labelKey;
-    }
-
-    forms.push(form);
+  // A localized field is a map of locale to value (`{ id: "...", en: "..." }`). z.fromJSONSchema
+  // reads it as an object whose catchall is the schema of one language: that schema says how to
+  // draw a language, the map only names the field.
+  const perLocale =
+    (meta as { localized?: boolean }).localized &&
+    (value as any)._zod.def.out?._zod.def.catchall;
+  if (perLocale) {
+    return { ...toField(key, perLocale), label: meta.label, localized: true };
   }
 
-  return forms;
+  const form: Form = {
+    type: meta.renderAs,
+    label: meta.label,
+    key,
+    unique: meta.unique,
+  };
+
+  if (
+    value.type === "object" &&
+    form.type !== "relation" &&
+    form.type !== "file"
+  ) {
+    form.members = toForm(value as z.ZodObject);
+  } else if (
+    value.type === "array" &&
+    meta.renderAs !== "multi_relation" &&
+    meta.renderAs !== "multi_file"
+  ) {
+    form.element = parseArray(value as z.ZodArray);
+  } else if (value.type === "enum") {
+    form.options = (value as z.ZodEnum).enum;
+  } else if (form.type === "relation" || form.type === "multi_relation") {
+    form.model = meta.model;
+    form.labelKey = meta.labelKey;
+  }
+
+  return form;
 };
+
+export const toForm = <const T extends Readonly<{ [x: string]: z.ZodType }>>(
+  input: z.ZodObject<T>,
+) =>
+  Object.entries(input.shape).map(([key, rawValue]) =>
+    toField(key, rawValue as z.ZodType),
+  );

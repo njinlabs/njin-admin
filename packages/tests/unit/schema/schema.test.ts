@@ -5,6 +5,7 @@ import {
   toForm,
   transformSchema,
 } from "../../../src/sdk/schema/schema";
+import article from "../../fixtures/article-schema.json";
 import post from "../../fixtures/post-schema.json";
 import rules from "../../fixtures/rules-schema.json";
 
@@ -257,5 +258,40 @@ describe("the id of a link", () => {
 
   test("is a string even when the record holds it as a number", () => {
     expect(schema.parse({ tag: { id: 7 }, tags: [] }).tag).toBe("7");
+  });
+});
+
+describe("a model with i18n", () => {
+  const { schema, form } = build(article);
+  const by = (key: string) => form.find((f) => f.key === key)!;
+
+  test("reads a field with a value per language as the field of one language", () => {
+    expect(by("title")).toMatchObject({
+      type: "text",
+      label: "Title",
+      localized: true,
+    });
+    expect(by("slug")).toMatchObject({ type: "text", unique: true });
+    expect(by("faq")).toMatchObject({
+      type: "array",
+      localized: true,
+      element: { type: "object" },
+    });
+    expect(by("isFeatured").localized).toBeUndefined();
+  });
+
+  test("validates each language the form sends", () => {
+    const ok = {
+      title: { id: "Halo", en: "Hello" },
+      slug: { id: "halo" },
+      body: {},
+      faq: { id: [{ question: "Q", answer: "A" }] },
+      isFeatured: false,
+    };
+
+    expect(schema.safeParse(ok).success).toBe(true);
+    expect(schema.safeParse({ ...ok, title: { id: "Hi" } }).success).toBe(
+      false,
+    );
   });
 });

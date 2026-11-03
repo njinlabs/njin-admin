@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "renderAs": "text",
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 120,
+        "label": "Title",
+        "localized": true
+      },
+      "label": "Title",
+      "localized": true
+    },
+    "slug": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "unique": true,
+        "renderAs": "text",
+        "type": "string",
+        "label": "Slug",
+        "localized": true
+      },
+      "label": "Slug",
+      "localized": true
+    },
+    "body": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "renderAs": "richtext",
+        "type": "string",
+        "label": "Body",
+        "localized": true
+      },
+      "label": "Body",
+      "localized": true
+    },
+    "faq": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "renderAs": "array",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "label": "Question",
+              "renderAs": "text",
+              "type": "string"
+            },
+            "answer": {
+              "label": "Answer",
+              "renderAs": "text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "question",
+            "answer"
+          ],
+          "additionalProperties": false,
+          "label": "Item",
+          "renderAs": "object"
+        },
+        "label": "FAQ",
+        "localized": true
+      },
+      "label": "FAQ",
+      "localized": true
+    },
+    "isFeatured": {
+      "default": false,
+      "label": "Featured?",
+      "renderAs": "boolean",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "title",
+    "slug",
+    "body",
+    "faq",
+    "isFeatured"
+  ],
+  "additionalProperties": false
+}
