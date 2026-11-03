@@ -108,6 +108,10 @@ const useViewPreference = () => {
 const grid =
   "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6";
 
+// In a window the columns follow the window's width, not the screen's, so the page's many
+// columns would make the thumbnails small.
+const pickerGrid = "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4";
+
 const Thumbnail = ({ file, small }: { file: FileRow; small?: boolean }) =>
   file.type.startsWith("image/") ? (
     <img
@@ -569,9 +573,18 @@ export const FileManager = ({ picker }: { picker?: Picker }) => {
         </p>
       )}
 
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
+      {/* The padding gives the ring of a picked file room inside the scroll area, which would cut it off at the edges; the negative margin keeps the layout where it was. */}
+      <div ref={scroller} className="-m-1 min-h-0 flex-1 overflow-y-auto p-1">
         {files.isPending ? (
-          <div className={view === "grid" ? grid : "flex flex-col gap-2"}>
+          <div
+            className={
+              view === "grid"
+                ? picker
+                  ? pickerGrid
+                  : grid
+                : "flex flex-col gap-2"
+            }
+          >
             {Array.from({ length: 12 }, (_, i) => (
               <Skeleton
                 // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list of placeholders.
@@ -600,7 +613,15 @@ export const FileManager = ({ picker }: { picker?: Picker }) => {
             </p>
           </div>
         ) : (
-          <div className={view === "grid" ? grid : "flex flex-col gap-2"}>
+          <div
+            className={
+              view === "grid"
+                ? picker
+                  ? pickerGrid
+                  : grid
+                : "flex flex-col gap-2"
+            }
+          >
             {rows.map((file) => (
               <FileItem
                 key={file.id}
