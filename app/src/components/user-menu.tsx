@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useCookies } from "react-cookie";
 import { PiSignOut } from "react-icons/pi";
 import { client } from "../lib/client";
+import { clearSession } from "../lib/session";
 
 // The signed-in user at the foot of the sidebar; a click opens what can be done with the session
 // (only signing out for now, after a confirmation).
@@ -29,9 +30,7 @@ export const UserMenu = ({ user }: { user: Row }) => {
     onSettled: () => {
       // What was loaded belongs to this session. Without the cookie, `Protected` sends the page to
       // the login (through the router, no reload) and drops the header.
-      queryClient.removeQueries({ queryKey: ["schema"] });
-      queryClient.removeQueries({ queryKey: ["permissions"] });
-      queryClient.removeQueries({ queryKey: ["model"] });
+      clearSession(queryClient);
       removeCookie("token", { path: "/" });
     },
   });

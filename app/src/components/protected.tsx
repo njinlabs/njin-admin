@@ -1,10 +1,11 @@
 import { checkToken, permissionsQuery } from "@njinlabs/njin-admin/sdk";
 import { Button } from "@njinlabs/njin-admin/ui";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { client } from "../lib/client";
+import { clearSession, watchExpiry } from "../lib/session";
 import { SessionContext } from "./session";
 import { Shell } from "./shell";
 
@@ -13,6 +14,9 @@ import { Shell } from "./shell";
 export const Protected = () => {
   const [cookies, , removeCookie] = useCookies(["token"]);
   const token: string | undefined = cookies.token;
+  const queryClient = useQueryClient();
+  // Told to the login page, so someone sent there by a session that ended knows why.
+  const [expired, setExpired] = useState(false);
 
   const { data: user, isError } = useQuery({
     queryKey: ["token", token],
@@ -31,14 +35,36 @@ export const Protected = () => {
     enabled: !!user,
   });
 
+  // A session can end while the page is open (the token expired, or was revoked elsewhere). Any
+  // request the server refuses with 401 then signs out, instead of leaving pages that fail one by one.
+  useEffect(() => {
+    if (!token) return;
+
+    return watchExpiry(client, token, () => {
+      setExpired(true);
+      clearSession(queryClient);
+      removeCookie("token", { path: "/" });
+    });
+  }, [token, queryClient, removeCookie]);
+
   useEffect(() => {
     if (token && !isError) return;
 
     delete client.defaults.headers.common.Authorization;
-    if (isError) removeCookie("token", { path: "/" });
+    if (isError) {
+      setExpired(true);
+      removeCookie("token", { path: "/" });
+    }
   }, [token, isError, removeCookie]);
 
-  if (!token) return <Navigate to="/login" />;
+  if (!token) {
+    return (
+      <Navigate
+        to="/login"
+        state={expired ? ({ expired: true } as never) : undefined}
+      />
+    );
+  }
   if (!user) return null;
   if (permissions.isError) {
     return (

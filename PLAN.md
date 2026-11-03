@@ -152,7 +152,9 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
 - [x] Login sudah dicoba di browser. Setup sampai dashboard belum.
 - [x] Logout: menu user di sidebar, dengan `ConfirmDialog`. Memanggil `logout`, menghapus cookie, header, dan cache
       `["schema"]`/`["model"]` (cache per sesi harus dibersihkan di sini juga bila bertambah). Belum dicoba di browser.
-- [ ] 401 di tengah sesi: sekarang baru ketahuan saat halaman dibuka ulang; tangani secara global.
+- [x] 401 di tengah sesi: `Protected` memasang interseptor (`watchExpiry`, `lib/session.ts`) pada client; 401 untuk request yang
+      membawa token yang sedang dipakai membersihkan cache sesi (`clearSession`), menghapus cookie, dan router mengarahkan ke
+      `/login` dengan pesan "Your session has ended" (state router `expired`, juga untuk token yang ditolak `check-token`). 401 tanpa token (salah password) atau untuk token yang sudah diganti diabaikan. Belum dicoba di browser.
 - [ ] Cookie `HttpOnly` dari server: login mengirim `Set-Cookie`, server membaca cookie, ada perlindungan CSRF. Pekerjaan
       di core. Cookie sekarang ditulis script (server mengirim token di JSON), jadi bisa dibaca script lain di halaman,
       sama seperti localStorage.

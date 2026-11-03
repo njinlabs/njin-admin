@@ -110,7 +110,7 @@ The admin side, in `app/src`:
   retry on failure. `Shell` only mounts after the session is checked, so the `Authorization` header is already set.
 - Signing out is in `components/user-menu.tsx` (the user at the foot of the sidebar, behind a `ConfirmDialog`): it calls
   `logout`, removes the cookie and the `["schema"]` and `["model"]` queries, and `Protected` then sends the page to
-  `/login` through the router. Anything cached per session must be cleared there too.
+  `/login` through the router. Everything cached per session goes through `clearSession` (`lib/session.ts`, which keeps only `setup-status` and `token`), so a new query key needs nothing extra. The same function runs when the server answers 401 to a request carrying the current token (`watchExpiry` in `Protected`): the cookie goes and the router sends the page to `/login`.
 - What the user may do is `GET /api/auth/permissions`, already worked out by the server (wildcards, `own`/`all`,
   token scopes, `ref`). `Protected` loads it with the user and shows nothing until both are in; pages read them with
   `useSession()`. Use `can`, `canList` and `canOn` (`sdk/api/permissions.ts`) to show only what will work; do not

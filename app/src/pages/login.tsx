@@ -8,7 +8,7 @@ import {
   Input,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { Controller, useForm } from "react-hook-form";
@@ -25,6 +25,10 @@ const schema = z.object({
 export const LoginPage = () => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["token"]);
+  // Sent here by a session that ended, not by someone arriving signed out.
+  const expired = useLocation({
+    select: (location) => !!(location.state as { expired?: boolean }).expired,
+  });
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -91,6 +95,15 @@ export const LoginPage = () => {
             </Field>
           )}
         />
+
+        {expired && !message && (
+          <p
+            role="status"
+            className="rounded-control border bg-subtle px-3 py-2 text-sm text-muted-foreground"
+          >
+            Your session has ended. Sign in again to continue.
+          </p>
+        )}
 
         {message && <FieldError>{message}</FieldError>}
 
