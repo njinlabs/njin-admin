@@ -3,7 +3,7 @@ import { exposeShared } from "@njinlabs/njin-admin/shared";
 import * as ui from "@njinlabs/njin-admin/ui";
 import * as reactQuery from "@tanstack/react-query";
 import * as reactRouter from "@tanstack/react-router";
-import React from "react";
+import React, { useEffect } from "react";
 import * as jsxRuntime from "react/jsx-runtime";
 import { CookiesProvider } from "react-cookie";
 import * as ReactDOM from "react-dom";
@@ -22,7 +22,7 @@ exposeShared({
   "@njinlabs/njin-admin/ui": ui,
 });
 
-await loadPlugins();
+const problems = await loadPlugins();
 
 const queryClient = new reactQuery.QueryClient();
 const router = createAdminRouter({
@@ -30,12 +30,22 @@ const router = createAdminRouter({
   queryClient,
 });
 
+// Raised once the Toaster is mounted: a toast made before it would have nowhere to show.
+const PluginProblems = () => {
+  useEffect(() => {
+    for (const problem of problems)
+      ui.toast.error("Plugin not loaded", problem);
+  }, []);
+  return null;
+};
+
 // Placeholder: proves app -> sdk -> registry is wired. Replaced by the real shell.
 createRoot(document.getElementById("root")!).render(
   <CookiesProvider>
     <reactQuery.QueryClientProvider client={queryClient}>
       <reactRouter.RouterProvider router={router} />
       <ui.Toaster />
+      <PluginProblems />
     </reactQuery.QueryClientProvider>
   </CookiesProvider>,
 );

@@ -133,7 +133,7 @@ Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pi
       `console.error` dan tanpa memuat style-nya.
 - [x] **Versi modul bersama**: aturannya, major React, react-dom, Query dan Router bagian dari kontrak (`contract.shared`); tes
       memastikannya sama dengan peer dependency dan versi terpasang, jadi mengganti major tanpa menaikkan kontrak gagal di tes.
-      Belum: pesan di layar (sekarang hanya console).
+      Plugin yang ditolak juga muncul sebagai toast ("Plugin not loaded") lewat nilai balik `loadPlugins`.
 - [ ] **Panduan CSS untuk plugin**: wajib `@source` ke folder plugin sendiri (lihat `plugin.css`), kelas buatan sendiri
       diberi awalan, hanya memakai token yang ada,
       daftar token yang stabil (nama token adalah kontrak).
@@ -212,7 +212,7 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 
 ## 7. Tooling dan rilis
 
-- [ ] `.gitattributes` (`* text=auto eol=lf`).
+- [x] `.gitattributes` (`* text=auto eol=lf`).
 - [x] CI: biome, typecheck, tes, dan build admin (`.github/workflows/ci.yml`), lulus di `main`.
 - [x] `LICENSE` (MIT, sama dengan core).
 - [ ] Rilis `@njinlabs/njin-admin` ke npm (alur seperti njin: GitHub Release lalu npm, dist-tag beta dulu).

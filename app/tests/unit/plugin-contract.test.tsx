@@ -237,14 +237,16 @@ describe("loadPlugins", () => {
       },
     });
 
+    let problems: string[] = [];
     try {
-      await loadPlugins();
+      problems = await loadPlugins();
     } finally {
       client.get = get;
       console.error = error;
       Reflect.deleteProperty(globalThis, "document");
     }
 
+    expect(problems).toHaveLength(2);
     expect(errors).toHaveLength(2);
     expect(String(errors[0])).toContain('"old"');
     expect(calls).toEqual([]);

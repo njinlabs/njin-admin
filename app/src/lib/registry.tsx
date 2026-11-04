@@ -91,11 +91,13 @@ const addStylesheet = (href: string) => {
   document.head.append(link);
 };
 
+// Returns what kept a plugin out, so the page can say so (the console is not where an admin looks).
 export const loadPlugins = async () => {
+  const problems: string[] = [];
   // njin core does not serve the manifest yet. Until it does the request fails (or the dev server
   // answers with the page itself), and there are simply no plugins.
   const manifest = await getManifest(client).catch(() => null);
-  if (!Array.isArray(manifest?.plugins)) return;
+  if (!Array.isArray(manifest?.plugins)) return problems;
 
   const { plugins } = manifest;
 
@@ -104,6 +106,7 @@ export const loadPlugins = async () => {
     const problem = contractProblem(name, contract);
     if (problem) {
       console.error(problem);
+      problems.push(problem);
       continue;
     }
 
@@ -115,6 +118,8 @@ export const loadPlugins = async () => {
     );
     registerPlugin(plugin.default);
   }
+
+  return problems;
 };
 
 // What a plugin adds goes into the lists the shell, the router and the forms read.
