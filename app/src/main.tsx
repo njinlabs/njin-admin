@@ -35,6 +35,7 @@ createRoot(document.getElementById("root")!).render(
   <CookiesProvider>
     <reactQuery.QueryClientProvider client={queryClient}>
       <reactRouter.RouterProvider router={router} />
+      <ui.Toaster />
     </reactQuery.QueryClientProvider>
   </CookiesProvider>,
 );

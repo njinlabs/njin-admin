@@ -6,7 +6,6 @@ import {
   type I18n,
   localizedDefault,
   type ModelSchema,
-  readRecords,
   schemaQuery,
   toApiError,
   toInput,
@@ -19,6 +18,7 @@ import {
   FieldError,
   hasInput,
   RenderForm,
+  toast,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBlocker, useParams } from "@tanstack/react-router";
@@ -42,6 +42,7 @@ import { client } from "../lib/client";
 import { optimizedImageSrc } from "../lib/file";
 import { withoutEmpty } from "../lib/localized";
 import { fieldRenderers } from "../lib/registry";
+import { mayPickFiles, relatedLoader } from "../lib/related";
 import { NoAccess } from "./users/shared";
 
 type Values = Record<string, unknown>;
@@ -205,10 +206,14 @@ const SettingsForm = ({
       }
 
       // The edits are saved either way; a refusal to publish shows below the form.
-      if (publish)
+      if (publish) {
         await move
           .mutateAsync({ action: "publish", locales: live })
-          .catch(() => {});
+          .then(() => toast.success("Published"))
+          .catch((failed) =>
+            toast.error("Saved, but not published", toApiError(failed).message),
+          );
+      } else toast.success("Saved");
 
       form.reset(form.getValues());
       setJustSaved(true);
@@ -293,16 +298,10 @@ const SettingsForm = ({
           control={form.control}
           locale={locale}
           disabled={!mayWrite}
-          filePicker={FilePickerDialog}
+          filePicker={mayPickFiles(permissions) ? FilePickerDialog : undefined}
           renderers={fieldRenderers}
           imageSrc={(file) => optimizedImageSrc(file.url)}
-          loadRelated={(related, search) =>
-            readRecords(client, related, {
-              search: search || undefined,
-              limit: 20,
-              locale,
-            }).then((page) => page.data)
-          }
+          loadRelated={relatedLoader(client, permissions, locale)}
         />
 
         {error &&
@@ -352,7 +351,12 @@ const SettingsForm = ({
         onConfirm={() =>
           move.mutate(
             { action: "unpublish", locales: live },
-            { onSuccess: () => setUnpublishing(false) },
+            {
+              onSuccess: () => {
+                setUnpublishing(false);
+                toast.success("Unpublished");
+              },
+            },
           )
         }
       />
@@ -385,6 +389,7 @@ const SettingsForm = ({
                 );
                 form.reset(valuesOf(fresh ?? saved));
                 setDiscarding(false);
+                toast.success("Changes discarded");
               },
             },
           )

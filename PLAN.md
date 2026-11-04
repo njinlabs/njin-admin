@@ -16,7 +16,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] Router dari registry (`createAdminRouter`), pemuat manifest dari `/api/admin/manifest`.
 - [x] Shell: layout dengan sidebar dari `navs`, judul halaman, token desain pertama dan mode gelap lewat
       `prefers-color-scheme` (`app/src/components/shell.tsx`, `theme.css`).
-- [x] Biome, 167 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
+- [x] Biome, 217 tes (unit dan feature); plugin yang dibuild tes ada di `packages/tests/fixtures/plugin`.
 - [x] Repo di GitHub (`njinlabs/njin-admin`, public), `LICENSE`, dan CI (biome, typecheck, tes, build admin).
 
 ## Belum terbukti
@@ -144,7 +144,7 @@ Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
 - [x] **Kit di `packages/src/ui/`, export `./ui`** (Base UI, hanya token, dibagi ke plugin lewat `sharedModules`):
       `Button`, `Field`/`FieldLabel`/`FieldDescription`/`FieldError`, `Input`, `Switch`, `Select`, `Popover`,
       `Calendar` (react-day-picker), `DatePicker`, `Skeleton`, `Dialog`, `ConfirmDialog` (AlertDialog Base UI, versi sempit dari
-      `Dialog`, dengan animasi), `Badge`, `Checkbox`, `MultiSelect`, dan varian `danger-ghost` pada `Button`. Halaman `/components` di admin untuk melihatnya.
+      `Dialog`, dengan animasi), `Badge`, `Checkbox`, `MultiSelect`, `Toaster`/`toast` (Base UI Toast), dan varian `danger-ghost` pada `Button`. Halaman `/components` di admin untuk melihatnya.
 - [x] Item menu aktif di sidebar memakai warna `primary` (bukan abu-abu) supaya jelas terlihat.
 - [x] Sudah dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, `ConfirmDialog`, popover menu user, mode gelap kit.
 - [x] **`RenderForm`** (semua tipe: text, email, numeric, boolean, select, datepicker, object, array, relation,
@@ -153,7 +153,7 @@ Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
       dicari di server (`loadRelated`, jeda 250 ms), pemilih file dan alamat gambar diberikan app (`filePicker`, `imageSrc`).
       `FieldError` bisa berdiri di luar `Field`. Popup `Select`/`MultiSelect` tidak lagi bergeser ke item terpilih.
 - [x] **Komponen halaman**: tabel data (kolom lebar tetap, seret, pilih kolom), skeleton form dan tabel, lencana status di
-      judul (`TitleSlot`). Paginasi lewat infinite scroll; toast belum ada.
+      judul (`TitleSlot`). Paginasi lewat infinite scroll; toast ada (`toast.success/error/info`, `Toaster` dipasang di `main.tsx`).
 - [ ] Token final dan dokumentasi kit untuk penulis plugin.
 
 ## 5. Auth dan sesi
@@ -181,8 +181,10 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
 - [x] Izin: `GET /api/auth/permissions` (sudah dihitung server: wildcard, scope own/all, scope token, level `ref`) dimuat
       `Protected` bersama user sebelum halaman mana pun tampil, lalu dibaca lewat `useSession()`. `can`, `canList` dan
       `canOn` (untuk satu baris, baris sendiri pada level `own`) ada di `sdk/api/permissions.ts`.
-- [ ] Menu dan tombol mengikuti izin: sudah di menu (Content, Settings, Files, Users) dan daftar konten (New, Edit, Hapus,
-      empty state). Halaman Users dan access group sudah, termasuk akses lewat URL. Form konten dan publish sudah mengikuti izin; halaman Settings juga.
+- [x] Menu dan tombol mengikuti izin: menu (Content, Settings, Files, Users), daftar konten (New, Edit, Hapus, empty state), halaman
+      Users dan access group (juga lewat URL), form konten (publish, Unpublish dan Discard ikut `publish`, seperti di server),
+      Settings, Files, widget. Pemilih relation tidak bertanya ke model yang tidak boleh dibaca, dan pemilih file hanya ada bila
+      `file` boleh dibaca.
 - [x] Hook izin untuk plugin: `useSession`, `useClient`, `useCan`, `useCanOn` di `sdk/session.tsx` (konteks dipasang
       `Protected`, sdk dibagi ke plugin). `requires` pada menu, halaman, dan widget mengikutinya.
 

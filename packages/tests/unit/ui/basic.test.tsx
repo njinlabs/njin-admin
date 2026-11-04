@@ -10,6 +10,8 @@ import {
   FieldLabel,
   Input,
   Skeleton,
+  Toaster,
+  toast,
 } from "../../../src/ui";
 
 describe("cn", () => {
@@ -129,5 +131,17 @@ describe("Badge", () => {
     expect(html).toContain("text-primary");
     expect(html).toContain("uppercase");
     expect(html).toContain("Admin");
+  });
+});
+
+describe("Toaster", () => {
+  test("renders nothing until a toast is raised, and toast offers the three kinds", () => {
+    expect(renderToString(<Toaster />)).toBe("");
+    expect(Object.keys(toast).sort()).toEqual([
+      "close",
+      "error",
+      "info",
+      "success",
+    ]);
   });
 });

@@ -130,7 +130,8 @@ The admin side, in `app/src`:
   token scopes, `ref`). `Protected` loads it with the user and shows nothing until both are in; pages read them with
   `useSession()`. Use `can`, `canList` and `canOn` (`sdk/api/permissions.ts`) to show only what will work; do not
   parse grants in the admin. The server still decides (403, or 404 for someone else's row). Clear `["permissions"]` on
-  sign out with the rest. Every new page and button follows it.
+  sign out with the rest. Every new page and button follows it. The server gates Publish, Unpublish and Discard on `publish`, so the form shows all three only with it. A relation is searched only
+  on a model the user may read, and files are picked only with `file` read (`lib/related.ts`).
 - Pages before a session (login, setup) share `components/auth-layout.tsx` and `password-input.tsx`.
 - Do not store the token in `localStorage`, and do not reload the page to move between login and the admin: navigate
   with the router.
@@ -227,6 +228,8 @@ a field a newer server adds is left alone rather than blocking the save.
 - Reach for the kit's component and its variants before writing classes by hand in the admin: a destructive menu item
   is `Button variant="danger-ghost"`, not a `<button>` coloured with `text-danger`, so colours stay in one place.
   `ConfirmDialog` is the yes/no before something is done; `Skeleton` is the loading placeholder.
+  `toast.success/error/info(title, description?)` raises a toast from anywhere; the admin mounts one `Toaster` in
+  `main.tsx`, and plugins share the kit, so they reach it too.
 - No icon library in the package: the few icons a component needs are inline SVG.
 - The admin's Tailwind must see the kit's classes (`@source` in `app/src/index.css`: the package sits behind
   `node_modules`, where Tailwind does not look). A plugin's CSS does not carry the kit's classes, the admin's does.

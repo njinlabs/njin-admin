@@ -24,3 +24,4 @@ export { RichTextEditor } from "./rich-text-editor";
 export { Select, type SelectOption } from "./select";
 export { Skeleton } from "./skeleton";
 export { Switch } from "./switch";
+export { Toaster, toast } from "./toast";

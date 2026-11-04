@@ -8,7 +8,6 @@ import {
   type I18n,
   type ModelSchema,
   type Row,
-  readRecords,
   recordQuery,
   removeLocaleMutation,
   schemaQuery,
@@ -24,6 +23,7 @@ import {
   FieldError,
   hasInput,
   RenderForm,
+  toast,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -55,6 +55,7 @@ import { client } from "../lib/client";
 import { optimizedImageSrc } from "../lib/file";
 import { withoutEmpty } from "../lib/localized";
 import { fieldRenderers } from "../lib/registry";
+import { mayPickFiles, relatedLoader } from "../lib/related";
 import { NoAccess } from "./users/shared";
 
 const ModelForm = ({
@@ -235,8 +236,11 @@ const ModelForm = ({
         // Shown below the form through `move.error`; the edits are saved either way.
         await move
           .mutateAsync({ id: saved.id, action: "publish" })
-          .catch(() => {});
-      }
+          .then(() => toast.success("Published"))
+          .catch((failed) =>
+            toast.error("Saved, but not published", toApiError(failed).message),
+          );
+      } else toast.success("Saved");
 
       // A new record goes on to its own page; an edit stays, with the saved values as what is not
       // yet changed.
@@ -257,7 +261,7 @@ const ModelForm = ({
         {editing ? `Edit ${model.name}` : `New ${model.name}`}
       </PageTitle>
       <HeaderActions>
-        {status === "changed" ? (
+        {status === "changed" && mayPublish ? (
           <ActionButton
             icon={<PiArrowCounterClockwise />}
             label="Discard"
@@ -356,16 +360,10 @@ const ModelForm = ({
           form={model.form}
           control={form.control}
           locale={locale}
-          filePicker={FilePickerDialog}
+          filePicker={mayPickFiles(permissions) ? FilePickerDialog : undefined}
           renderers={fieldRenderers}
           imageSrc={(file) => optimizedImageSrc(file.url)}
-          loadRelated={(related, search) =>
-            readRecords(client, related, {
-              search: search || undefined,
-              limit: 20,
-              locale,
-            }).then((page) => page.data)
-          }
+          loadRelated={relatedLoader(client, permissions, locale)}
         />
 
         {error &&
@@ -427,6 +425,7 @@ const ModelForm = ({
             { id: record.id, locale: code },
             {
               onSuccess: () => {
+                toast.success("Language removed");
                 const fresh = queryClient.getQueryData<Row>(
                   recordQuery(client, model.prefix, record.id).queryKey,
                 );
@@ -464,7 +463,12 @@ const ModelForm = ({
           record &&
           move.mutate(
             { id: record.id, action: "unpublish" },
-            { onSuccess: () => setUnpublishing(false) },
+            {
+              onSuccess: () => {
+                setUnpublishing(false);
+                toast.success("Unpublished");
+              },
+            },
           )
         }
       />
@@ -498,6 +502,7 @@ const ModelForm = ({
                 );
                 form.reset(valuesOf(fresh ?? record));
                 setDiscarding(false);
+                toast.success("Changes discarded");
               },
             },
           )

@@ -18,6 +18,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  toast,
 } from "@njinlabs/njin-admin/ui";
 import {
   useInfiniteQuery,
@@ -523,7 +524,12 @@ export const RecordList = ({
         confirmLabel={destroy.isPending ? "Deleting…" : "Delete"}
         onConfirm={() =>
           deleting &&
-          destroy.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
+          destroy.mutate(deleting.id, {
+            onSuccess: () => {
+              setDeleting(null);
+              toast.success("Deleted");
+            },
+          })
         }
         pending={destroy.isPending}
         variant="danger"

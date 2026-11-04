@@ -16,6 +16,7 @@ import {
   Input,
   Select,
   Skeleton,
+  toast,
 } from "@njinlabs/njin-admin/ui";
 import {
   useInfiniteQuery,
@@ -149,7 +150,6 @@ const FileItem = ({
   picked,
   onPick,
   onDelete,
-  onNotice,
 }: {
   view: View;
   file: FileRow;
@@ -157,7 +157,6 @@ const FileItem = ({
   picked?: boolean;
   onPick?: () => void;
   onDelete?: () => void;
-  onNotice: (message: string) => void;
 }) => {
   const list = view === "list";
 
@@ -170,7 +169,7 @@ const FileItem = ({
         aria-label={`Download ${file.name}`}
         onClick={() =>
           download(file).catch(() =>
-            onNotice("The file could not be downloaded"),
+            toast.error("The file could not be downloaded"),
           )
         }
       >
@@ -184,8 +183,8 @@ const FileItem = ({
         onClick={() =>
           navigator.clipboard
             .writeText(absoluteUrl(file.url))
-            .then(() => onNotice("Link copied"))
-            .catch(() => onNotice("The link could not be copied"))
+            .then(() => toast.success("Link copied"))
+            .catch(() => toast.error("The link could not be copied"))
         }
       >
         <PiLink />
@@ -393,8 +392,6 @@ export const FileManager = ({ picker }: { picker?: Picker }) => {
   const [searchText, setSearchText] = useState("");
   const [deleting, setDeleting] = useState<FileRow | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
-  const [notice, setNotice] = useState("");
-  const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const input = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const search = useDebounced(searchText.trim());
@@ -433,12 +430,6 @@ export const FileManager = ({ picker }: { picker?: Picker }) => {
   );
   const upload = useMutation(uploadFileMutation(client, queryClient));
   const mayUpload = !!can(permissions, "file", "create");
-
-  const say = (message: string) => {
-    setNotice(message);
-    clearTimeout(noticeTimer.current);
-    noticeTimer.current = setTimeout(() => setNotice(""), 3000);
-  };
 
   const change = (id: string, patch: Partial<Upload>) =>
     setUploads((all) =>
@@ -567,11 +558,6 @@ export const FileManager = ({ picker }: { picker?: Picker }) => {
           ))}
         </div>
       </div>
-      {notice && (
-        <p role="status" className="text-sm text-muted-foreground">
-          {notice}
-        </p>
-      )}
 
       {/* The padding gives the ring of a picked file room inside the scroll area, which would cut it off at the edges; the negative margin keeps the layout where it was. */}
       <div ref={scroller} className="-m-1 min-h-0 flex-1 overflow-y-auto p-1">
@@ -634,7 +620,6 @@ export const FileManager = ({ picker }: { picker?: Picker }) => {
                     ? () => setDeleting(file)
                     : undefined
                 }
-                onNotice={say}
               />
             ))}
           </div>

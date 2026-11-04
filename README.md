@@ -61,6 +61,9 @@ What it can add:
 - `fields`: input renderers for fields the server tagged with `plugin(text(), ["<name>:<renderer>", options])`.
   `fields: { slugify: ({ value, onChange, options, values }) => ... }` is used for `"reports:slugify"`.
 
+A plugin can raise a toast from anywhere with `toast.success/error/info(title, description?)` from `@njinlabs/njin-admin/ui`;
+the admin mounts the one `Toaster`.
+
 `requires: { resource, action }` names a resource of the server's access catalog (models, `vars.<prefix>`,
 `file`, `user`, `access_group`, `analytics`, and the `permissions` the server plugin declares). Inside a
 plugin, `useSession`, `useClient`, `useCan` and `useCanOn` from the sdk read who is signed in and what they may do.

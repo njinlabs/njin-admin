@@ -17,6 +17,7 @@ import {
   Select,
   Skeleton,
   Switch,
+  toast,
 } from "@njinlabs/njin-admin/ui";
 import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -208,6 +209,24 @@ export const ComponentsPage = () => {
           variant="danger"
           onConfirm={() => setConfirming(false)}
         />
+      </Section>
+
+      <Section title="Toast">
+        <Button onClick={() => toast.success("Saved")}>Success</Button>
+        <Button
+          variant="outline"
+          onClick={() => toast.info("Link copied", "Paste it anywhere.")}
+        >
+          Info
+        </Button>
+        <Button
+          variant="danger"
+          onClick={() =>
+            toast.error("Could not save", "The title is already taken.")
+          }
+        >
+          Error
+        </Button>
       </Section>
 
       <Section title="Dialog">
