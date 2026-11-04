@@ -57,7 +57,8 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
 - Field renderers: the server's `plugin(type, ["<plugin>:<renderer>", options])` adds the meta `plugin: [name, options]`
   to a field and keeps its base type. `toForm` reads it as `Form.plugin = { name, options }`; `registerPlugin`
   (`lib/registry.tsx`) stores a plugin's `fields` as `"<plugin>:<key>"` in `fieldRenderers`, and `RenderForm` takes them
-  as `renderers`. The renderer draws the input only (`FieldProps`); the label, error and place are `RenderForm`'s. A name
+  as `renderers`. The renderer draws the input only (`FieldProps`); the label, error and place are `RenderForm`'s. It gets `locale` and, for
+  top-level `localized` fields, `value`/`values` already in that language (not the map). A name
   nobody registered is drawn as the base type. Lists (`cell.tsx`) do not use plugin renderers.
 - React, `react/jsx-runtime`, `react-dom`, `@tanstack/react-query`, `@tanstack/react-router`, the sdk and the ui kit are **not**
   bundled into a plugin. The admin puts its own copies on `globalThis.__njin` (`exposeShared`) before loading any
@@ -65,6 +66,9 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
 - `exposeShared` takes `Record<SharedModule, unknown>`: adding to `sharedModules` fails to compile until `app/src/main.tsx`
   provides it. Add the new module's types/peer dependency too. The kit is shared for the same reason as React: Base UI has context
   and portals, so a plugin must use the admin's copy.
+- `contract` (`shared.ts`) is the version a plugin is built for. Bump `contract.version` on any breaking change to the sdk, kit
+  or shared modules; the build writes it to `contract.json` and `loadPlugins` refuses a manifest entry whose `contract`
+  differs. `contract.shared` holds the shared packages' majors and a test ties it to the peer dependencies.
 - A plugin is always built in production mode with the production JSX runtime (the admin only shares that one).
 - A plugin's stylesheet is `@import "@njinlabs/njin-admin/plugin.css";` plus `@source "./";` (the folder with its
   files). `plugin.css` turns off Tailwind's own source detection on purpose: left alone it scans the whole project it

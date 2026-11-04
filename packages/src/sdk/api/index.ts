@@ -18,6 +18,8 @@ export type ManifestPlugin = {
   name: string;
   entry: string;
   styles?: string[];
+  // The contract version in the plugin's build (contract.json); the admin loads only its own.
+  contract?: number;
 };
 
 export type Manifest = { plugins: ManifestPlugin[] };

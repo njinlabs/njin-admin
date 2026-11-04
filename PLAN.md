@@ -122,13 +122,18 @@ Yang sudah ada hanya `navs` dan `routes`. Perlu diputuskan sebelum ada plugin pi
       (`widgets`: `size`, `order`, `requires`; `pages/dashboard.tsx`, tiap widget dalam `ErrorBoundary`) dan renderer field
       (`fields`, dipilih server lewat `plugin(text(), ["nama-plugin:renderer", options])`, disimpan sebagai
       `"<name>:<renderer>"`). `name` plugin wajib. Izin plugin dideklarasikan di `definePlugin({ permissions })` server.
-- [ ] Renderer field dan i18n: field `localized` berupa peta bahasa, jadi `FieldProps.values` berisi peta untuk field yang
-      diikuti (mis. `title`) dan renderer belum tahu bahasa yang sedang diedit. Beri renderer `locale` dan nilai yang sudah
-      dipilih per bahasa (atau helper untuk membacanya). Ketahuan di plugin contoh `slugify` saat i18n menyala.
+- [x] Renderer field dan i18n: `FieldProps.locale` adalah bahasa yang sedang diedit, dan `values` sudah berisi nilai bahasa itu
+      untuk field `localized` tingkat atas (bukan peta), jadi renderer seperti `slugify` tidak perlu tahu bentuk peta.
+      Field `localized` di dalam object/array belum diselesaikan.
 - [ ] Yang belum: halaman di bawah `/content/<prefix>`, aksi tambahan di daftar record, renderer untuk sel daftar,
       widget bawaan (analytics), section menu bebas.
-- [ ] **Versi kontrak**: manifest membawa versi sdk, loader menolak plugin yang tidak cocok dengan pesan jelas.
-- [ ] **Versi modul bersama**: plugin dibuild terhadap React/Router versi tertentu; tentukan aturan dan cek.
+- [x] **Versi kontrak**: `contract.version` (`shared.ts`) naik pada perubahan yang memecah apa yang diimpor plugin. Build plugin
+      menulis `contract.json` di sebelah `index.js`; manifest membawa angkanya (`ManifestPlugin.contract`, diisi tooling core,
+      lihat bagian 6). `loadPlugins` menolak plugin yang berbeda atau tidak menyebut kontrak (`contractProblem`), dengan
+      `console.error` dan tanpa memuat style-nya.
+- [x] **Versi modul bersama**: aturannya, major React, react-dom, Query dan Router bagian dari kontrak (`contract.shared`); tes
+      memastikannya sama dengan peer dependency dan versi terpasang, jadi mengganti major tanpa menaikkan kontrak gagal di tes.
+      Belum: pesan di layar (sekarang hanya console).
 - [ ] **Panduan CSS untuk plugin**: wajib `@source` ke folder plugin sendiri (lihat `plugin.css`), kelas buatan sendiri
       diberi awalan, hanya memakai token yang ada,
       daftar token yang stabil (nama token adalah kontrak).

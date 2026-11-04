@@ -8,6 +8,7 @@ import type {
   Widget,
 } from "@njinlabs/njin-admin/sdk";
 import { can, canList, getManifest } from "@njinlabs/njin-admin/sdk";
+import { contractProblem } from "@njinlabs/njin-admin/shared";
 import type { FC } from "react";
 import {
   PiFolderOpenDuotone,
@@ -98,7 +99,14 @@ export const loadPlugins = async () => {
 
   const { plugins } = manifest;
 
-  for (const { entry, styles = [] } of plugins) {
+  for (const { name, entry, styles = [], contract } of plugins) {
+    // Checked before anything of the plugin is loaded, so a wrong build adds no styles either.
+    const problem = contractProblem(name, contract);
+    if (problem) {
+      console.error(problem);
+      continue;
+    }
+
     for (const href of styles) addStylesheet(href);
 
     const plugin: { default: AdminPluginConfig } = await import(

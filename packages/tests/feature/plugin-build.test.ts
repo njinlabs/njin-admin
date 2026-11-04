@@ -11,7 +11,7 @@ import * as ReactDom from "react-dom";
 import { renderToString } from "react-dom/server";
 import { build } from "vite";
 import * as sdk from "../../src/sdk";
-import { exposeShared } from "../../src/shared";
+import { contract, exposeShared } from "../../src/shared";
 import * as ui from "../../src/ui";
 import { adminPluginConfig } from "../../src/vite";
 
@@ -41,6 +41,12 @@ describe("building and loading an admin plugin", () => {
 
     expect(code).not.toMatch(/from\s*["']react/);
     expect(code).toContain('globalThis.__njin["react/jsx-runtime"]');
+  });
+
+  test("the build says which contract it is for", async () => {
+    const written = await Bun.file(join(outDir, "contract.json")).json();
+
+    expect(written).toEqual({ version: contract.version });
   });
 
   test("the bundle reads the kit from the admin instead of carrying Base UI", async () => {

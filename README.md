@@ -59,7 +59,15 @@ What it can add:
   empty; each user picks from the widgets they may see (the admin's own and the plugins'), so a widget is listed
   only to people who pass its `requires`.
 - `fields`: input renderers for fields the server tagged with `plugin(text(), ["<name>:<renderer>", options])`.
-  `fields: { slugify: ({ value, onChange, options, values }) => ... }` is used for `"reports:slugify"`.
+  `fields: { slugify: ({ value, onChange, options, values, locale }) => ... }` is used for `"reports:slugify"`. With
+  languages, `locale` is the one being edited and `value` and `values` are already that language's text, not the map.
+
+### Contract version
+
+The build writes `contract.json` (`{ "version": 1 }`) beside `index.js`; the manifest entry carries it as `contract`.
+The admin loads only a plugin built for its own contract and logs why it skipped any other (a plugin that declares
+none is skipped too). The version goes up on a breaking change to the sdk, the kit or the shared modules, and a new
+major of React, react-dom, TanStack Query or Router counts as one.
 
 A plugin can raise a toast from anywhere with `toast.success/error/info(title, description?)` from `@njinlabs/njin-admin/ui`;
 the admin mounts the one `Toaster`.

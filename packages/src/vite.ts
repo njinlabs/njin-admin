@@ -1,7 +1,13 @@
 import tailwindcss from "@tailwindcss/vite";
 import externalGlobals from "rollup-plugin-external-globals";
 import type { UserConfig } from "vite";
-import { SHARED_GLOBAL, type SharedModule, sharedModules } from "./shared";
+import {
+  contract,
+  type PluginContract,
+  SHARED_GLOBAL,
+  type SharedModule,
+  sharedModules,
+} from "./shared";
 
 type Options = {
   // The file that default-exports defineAdminPlugin(...).
@@ -31,7 +37,22 @@ export const adminPluginConfig = ({
   oxc: { jsx: { runtime: "automatic", development: false } },
   // Library mode does not replace this, and some packages (react-icons) check it.
   define: { "process.env.NODE_ENV": '"production"' },
-  plugins: [tailwindcss()],
+  plugins: [
+    tailwindcss(),
+    {
+      // Says which contract this build is for; the manifest carries it to the admin.
+      name: "njin-admin-contract",
+      generateBundle() {
+        this.emitFile({
+          type: "asset",
+          fileName: "contract.json",
+          source: JSON.stringify({
+            version: contract.version,
+          } satisfies PluginContract),
+        });
+      },
+    },
+  ],
   build: {
     outDir,
     emptyOutDir: true,

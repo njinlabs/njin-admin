@@ -211,3 +211,42 @@ describe("the admin's own widgets", () => {
     ]);
   });
 });
+
+describe("loadPlugins", () => {
+  test("skips a plugin built for another contract and says why", async () => {
+    const calls: string[] = [];
+    const errors: unknown[] = [];
+    const { client } = await import("../../src/lib/client");
+    const { loadPlugins } = await import("../../src/lib/registry");
+    const get = client.get;
+    const error = console.error;
+
+    client.get = (async () => ({
+      data: {
+        plugins: [
+          { name: "old", entry: "/old.js", contract: 0 },
+          { name: "none", entry: "/none.js" },
+        ],
+      },
+    })) as typeof client.get;
+    console.error = (message: unknown) => errors.push(message);
+    Object.assign(globalThis, {
+      document: {
+        createElement: () => ({}),
+        head: { append: () => calls.push("style") },
+      },
+    });
+
+    try {
+      await loadPlugins();
+    } finally {
+      client.get = get;
+      console.error = error;
+      Reflect.deleteProperty(globalThis, "document");
+    }
+
+    expect(errors).toHaveLength(2);
+    expect(String(errors[0])).toContain('"old"');
+    expect(calls).toEqual([]);
+  });
+});
