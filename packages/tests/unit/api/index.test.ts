@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import axios, { AxiosError } from "axios";
-import { getManifest, toApiError } from "../../../src/sdk/api";
+import { createClient, getManifest, toApiError } from "../../../src/sdk/api";
 import { capture } from "./capture";
 
 test("getManifest reads /api/admin/manifest", async () => {
@@ -100,4 +100,11 @@ describe("toApiError", () => {
     expect(toApiError(new Error("boom")).message).toBe("boom");
     expect(toApiError("x").message).toBe("Something went wrong");
   });
+});
+
+test("createClient sends the session cookie and the header the server wants with it", () => {
+  const client = createClient();
+
+  expect(client.defaults.withCredentials).toBe(true);
+  expect(client.defaults.headers["X-Requested-With"]).toBe("njin-admin");
 });

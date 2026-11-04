@@ -12,8 +12,8 @@ export const getSetupStatus = async (
   return data;
 };
 
-// POST /api/setup. Creates the first admin and signs them in; the server refuses (403) once any
-// user exists.
+// POST /api/setup. Creates the first admin and signs the browser in (the cookie, as at login); the
+// server refuses (403) once any user exists.
 export const createFirstAdmin = async (
   client: AxiosInstance,
   input: { name: string; email: string; password: string },

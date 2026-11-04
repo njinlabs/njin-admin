@@ -178,9 +178,10 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
 - [x] 401 di tengah sesi: `Protected` memasang interseptor (`watchExpiry`, `lib/session.ts`) pada client; 401 untuk request yang
       membawa token yang sedang dipakai membersihkan cache sesi (`clearSession`), menghapus cookie, dan router mengarahkan ke
       `/login` dengan pesan "Your session has ended" (state router `expired`, juga untuk token yang ditolak `check-token`). 401 tanpa token (salah password) atau untuk token yang sudah diganti diabaikan.
-- [ ] Cookie `HttpOnly` dari server: login mengirim `Set-Cookie`, server membaca cookie, ada perlindungan CSRF. Pekerjaan
-      di core. Cookie sekarang ditulis script (server mengirim token di JSON), jadi bisa dibaca script lain di halaman,
-      sama seperti localStorage.
+- [x] Cookie `HttpOnly` dari server: login dan setup mengirim `Set-Cookie` (`njin_session`, `SameSite=Strict`, `Path=/api`),
+      server membaca cookie, dan request yang mengubah data lewat cookie wajib membawa `X-Requested-With` (perlindungan CSRF;
+      `createClient` mengirimnya). Admin tidak lagi menyimpan token: `react-cookie` dan header `Authorization` dihapus, status
+      login adalah query `check-token` (`sessionQuery`).
 - [ ] Plugin dimuat sebelum login. Bila `GET /api/admin/manifest` nanti butuh token, plugin tidak termuat setelah login
       lewat router; cari cara memuatnya setelah sesi diperiksa.
 - [x] Izin: `GET /api/auth/permissions` (sudah dihitung server: wildcard, scope own/all, scope token, level `ref`) dimuat
@@ -212,16 +213,8 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 - [x] Layani `/_admin/plugins/*` (pakai `resolveSafePath`).
 - [x] `njin build`/`njin dev` membuild plugin lokal dengan `adminPluginConfig`
       (`vite` sebagai peer/optional dependency, hanya wajib bila `admin.plugins` terisi).
-- [ ] **OAuth: halaman HTML di core diganti halaman admin** (`src/modules/oauth.ts`, `core/http/html_page.ts`). Ditunda: pemilik repo
-      yang akan mengerjakannya nanti; halaman authorize di admin belum jalan end-to-end sampai ini selesai. Admin sudah siap
-      (bagian 5); core perlu, dengan sesi biasa (`Authorization: Bearer`, bukan cookie `njin_web`):
-      - `GET /api/oauth/authorize?<query client>` -> `{ data: { client: { id, name }, host, scopes, redirect? } }`: sama dengan
-        `resolveAuthorize` + `grantable`; `redirect` bila consent lama sudah mencakup (tanpa `prompt=consent`); 400 `{ message }`
-        untuk client atau redirect_uri yang tidak dikenal (tidak pernah dialihkan).
-      - `POST /api/oauth/authorize` body `{ ...query client, action: "approve" | "deny", grant: string[] }` ->
-        `{ data: { redirect } }` (kode, atau `access_denied`, plus `state` dan `iss`). Sesi cukup sebagai pengaman CSRF.
-      - `authorization_endpoint` di metadata menunjuk ke `/_admin/oauth/authorize`; login/logout HTML, `consentPage`,
-        cookie `njin_web` dan token `web` dihapus. Core ini milik kolega: belum disentuh dari repo admin.
+- [x] **OAuth: halaman HTML di core diganti halaman admin**: `GET`/`POST /api/oauth/authorize` (JSON, sesi biasa) ada di core, `authorization_endpoint`
+      menunjuk ke `/_admin/oauth/authorize`; login/logout HTML, `consentPage`, cookie `njin_web` dan token `web` dihapus.
 - [x] Tes di core untuk semuanya.
 - [x] Distribusi admin: aset rilis GitHub dan `adminVersion`, menggantikan `template/_admin` yang sudah usang.
 - [x] Catat perubahan breaking `GET /api/schema` (`data` jadi `models`) di CHANGELOG bila ada.

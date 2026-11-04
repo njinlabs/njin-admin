@@ -12,7 +12,16 @@ export * from "./vars";
 
 // The one axios instance for talking to the njin server. Same origin by default (the admin is
 // served by njin); in dev Vite proxies /api to the server.
-export const createClient = (baseURL = "") => axios.create({ baseURL });
+//
+// The session is an HttpOnly cookie, which the browser sends by itself. `X-Requested-With` goes
+// with every request: the server wants it on anything that changes data when the credential is
+// that cookie, since a page on another site cannot add a header like it.
+export const createClient = (baseURL = "") =>
+  axios.create({
+    baseURL,
+    withCredentials: true,
+    headers: { "X-Requested-With": "njin-admin" },
+  });
 
 // A plugin the server lists: where its script is, and the stylesheets built with it.
 export type ManifestPlugin = {

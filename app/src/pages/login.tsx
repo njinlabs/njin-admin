@@ -7,15 +7,15 @@ import {
   FieldLabel,
   Input,
 } from "@njinlabs/njin-admin/ui";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useCookies } from "react-cookie";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 import { AuthLayout } from "../components/auth-layout";
 import { PasswordInput } from "../components/password-input";
 import { client } from "../lib/client";
+import { sessionKey, sessionQuery } from "../lib/session";
 
 const schema = z.object({
   email: z.email("Enter a valid email"),
@@ -33,7 +33,8 @@ export const LoginPage = () => {
     select: (location) =>
       safeRedirect((location.search as { redirect?: unknown }).redirect),
   });
-  const [cookies, setCookie] = useCookies(["token"]);
+  const queryClient = useQueryClient();
+  const session = useQuery(sessionQuery());
   // Sent here by a session that ended, not by someone arriving signed out.
   const expired = useLocation({
     select: (location) => !!(location.state as { expired?: boolean }).expired,
@@ -46,24 +47,24 @@ export const LoginPage = () => {
 
   const signIn = useMutation({
     mutationFn: (input: z.infer<typeof schema>) => login(client, input),
-    onSuccess: ({ token }) => {
-      setCookie("token", token, { path: "/", maxAge: 60 * 60 * 24 * 30 });
-    },
+    // The server has signed the browser in (a cookie this page cannot see); what is left is to
+    // let `Protected` know.
+    onSuccess: ({ user }) => queryClient.setQueryData(sessionKey, user),
   });
 
   useEffect(() => {
-    if (!cookies.token) return;
+    if (!session.data) return;
     // The address is the router's own, without the base path the browser needs.
     if (redirect) router.history.push(`${router.basepath}${redirect}`);
     else navigate({ to: "/" });
-  }, [cookies.token, navigate, router, redirect]);
+  }, [session.data, navigate, router, redirect]);
 
   const error = signIn.error && toApiError(signIn.error);
   // The server says only "Unauthorized" for a wrong email or password.
   const message =
     error?.status === 401 ? "Wrong email or password." : error?.message;
 
-  if (cookies.token) return null;
+  if (session.data) return null;
 
   return (
     <AuthLayout

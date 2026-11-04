@@ -9,12 +9,12 @@ import {
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useCookies } from "react-cookie";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 import { AuthLayout } from "../components/auth-layout";
 import { PasswordInput } from "../components/password-input";
 import { client } from "../lib/client";
+import { sessionKey } from "../lib/session";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Required"),
@@ -27,7 +27,6 @@ type Values = z.infer<typeof schema>;
 export const SetupPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [, setCookie] = useCookies(["token"]);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -36,10 +35,11 @@ export const SetupPage = () => {
 
   const setup = useMutation({
     mutationFn: (input: Values) => createFirstAdmin(client, input),
-    onSuccess: async ({ token }) => {
+    onSuccess: async ({ user }) => {
       // Before leaving, or the root would send us straight back here.
       queryClient.setQueryData(["setup-status"], { needsSetup: false });
-      setCookie("token", token, { path: "/", maxAge: 60 * 60 * 24 * 30 });
+      // The server has signed the browser in (a cookie this page cannot see).
+      queryClient.setQueryData(sessionKey, user);
       await navigate({ to: "/" });
     },
     onError: (error) => {

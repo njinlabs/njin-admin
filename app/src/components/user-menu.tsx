@@ -9,15 +9,13 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useCookies } from "react-cookie";
 import { PiPlugsConnected, PiSignOut } from "react-icons/pi";
 import { client } from "../lib/client";
-import { clearSession } from "../lib/session";
+import { endSession } from "../lib/session";
 
 // The signed-in user at the foot of the sidebar; a click opens what can be done with the session
 // (only signing out for now, after a confirmation).
 export const UserMenu = ({ user }: { user: Row }) => {
-  const [, , removeCookie] = useCookies(["token"]);
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -29,10 +27,9 @@ export const UserMenu = ({ user }: { user: Row }) => {
     mutationFn: () => logout(client),
     // A session the server no longer knows is as good as ended, so a failed request still signs out.
     onSettled: () => {
-      // What was loaded belongs to this session. Without the cookie, `Protected` sends the page to
-      // the login (through the router, no reload) and drops the header.
-      clearSession(queryClient);
-      removeCookie("token", { path: "/" });
+      // What was loaded belongs to this session. With nobody signed in, `Protected` sends the page
+      // to the login (through the router, no reload).
+      endSession(queryClient);
     },
   });
 

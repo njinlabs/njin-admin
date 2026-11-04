@@ -5,7 +5,6 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { CookiesProvider } from "react-cookie";
 import { renderToString } from "react-dom/server";
 import { createAdminRouter } from "../../src/lib/create-router";
 
@@ -24,11 +23,9 @@ const visit = async (state?: object) => {
   await router.load();
 
   return renderToString(
-    <CookiesProvider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </CookiesProvider>,
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
   );
 };
 

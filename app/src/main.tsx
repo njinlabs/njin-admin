@@ -5,7 +5,6 @@ import * as reactQuery from "@tanstack/react-query";
 import * as reactRouter from "@tanstack/react-router";
 import React, { useEffect } from "react";
 import * as jsxRuntime from "react/jsx-runtime";
-import { CookiesProvider } from "react-cookie";
 import * as ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -41,11 +40,9 @@ const PluginProblems = () => {
 
 // Placeholder: proves app -> sdk -> registry is wired. Replaced by the real shell.
 createRoot(document.getElementById("root")!).render(
-  <CookiesProvider>
-    <reactQuery.QueryClientProvider client={queryClient}>
-      <reactRouter.RouterProvider router={router} />
-      <ui.Toaster />
-      <PluginProblems />
-    </reactQuery.QueryClientProvider>
-  </CookiesProvider>,
+  <reactQuery.QueryClientProvider client={queryClient}>
+    <reactRouter.RouterProvider router={router} />
+    <ui.Toaster />
+    <PluginProblems />
+  </reactQuery.QueryClientProvider>,
 );

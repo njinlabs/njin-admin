@@ -1,23 +1,16 @@
-import {
-  checkToken,
-  permissionsQuery,
-  SessionContext,
-} from "@njinlabs/njin-admin/sdk";
+import { permissionsQuery, SessionContext } from "@njinlabs/njin-admin/sdk";
 import { Button } from "@njinlabs/njin-admin/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useCookies } from "react-cookie";
 import { client } from "../lib/client";
-import { clearSession, watchExpiry } from "../lib/session";
+import { endSession, sessionQuery, watchExpiry } from "../lib/session";
 import { Shell } from "./shell";
 
-// The pages behind the login. The token is checked with the server before anything is shown; a
-// token it refuses is dropped, which sends the user back to the login page.
+// The pages behind the login. The session (an HttpOnly cookie the page cannot see) is checked with
+// the server before anything is shown; if it is refused, the user goes back to the login page.
 // `bare` is for a page that needs the session but not the sidebar (authorizing an app).
 export const Protected = ({ bare }: { bare?: boolean }) => {
-  const [cookies, , removeCookie] = useCookies(["token"]);
-  const token: string | undefined = cookies.token;
   const queryClient = useQueryClient();
   // Where the login page brings the user back to: the page they were on, not always the dashboard.
   const here = useLocation({
@@ -26,46 +19,41 @@ export const Protected = ({ bare }: { bare?: boolean }) => {
   // Told to the login page, so someone sent there by a session that ended knows why.
   const [expired, setExpired] = useState(false);
 
-  const { data: user, isError } = useQuery({
-    queryKey: ["token", token],
-    queryFn: async () => {
-      client.defaults.headers.common.Authorization = `Bearer ${token}`;
-      return checkToken(client);
-    },
-    enabled: !!token,
-    retry: false,
-  });
+  const session = useQuery(sessionQuery());
+  const user = session.data;
 
   // What the user may do shapes every page, so none is shown before it is known. It follows the
-  // token: a refused token (above) has already sent the page to the login.
+  // session: one that was refused (above) has already sent the page to the login.
   const permissions = useQuery({
     ...permissionsQuery(client),
     enabled: !!user,
   });
 
-  // A session can end while the page is open (the token expired, or was revoked elsewhere). Any
-  // request the server refuses with 401 then signs out, instead of leaving pages that fail one by one.
-  useEffect(() => {
-    if (!token) return;
+  // A session can end while the page is open (it expired, or was revoked elsewhere). Any request
+  // the server refuses with 401 then signs out, instead of leaving pages that fail one by one.
+  useEffect(
+    () =>
+      watchExpiry(client, () => {
+        setExpired(true);
+        endSession(queryClient);
+      }),
+    [queryClient],
+  );
 
-    return watchExpiry(client, token, () => {
-      setExpired(true);
-      clearSession(queryClient);
-      removeCookie("token", { path: "/" });
-    });
-  }, [token, queryClient, removeCookie]);
-
-  useEffect(() => {
-    if (token && !isError) return;
-
-    delete client.defaults.headers.common.Authorization;
-    if (isError) {
-      setExpired(true);
-      removeCookie("token", { path: "/" });
-    }
-  }, [token, isError, removeCookie]);
-
-  if (!token) {
+  if (session.isPending) return null;
+  if (session.isError) {
+    return (
+      <div className="grid min-h-screen place-items-center p-6">
+        <div className="flex flex-col items-start gap-3 text-sm text-muted-foreground">
+          <p>The server could not be reached.</p>
+          <Button variant="outline" onClick={() => session.refetch()}>
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  if (!user) {
     return (
       <Navigate
         to="/login"
@@ -74,7 +62,6 @@ export const Protected = ({ bare }: { bare?: boolean }) => {
       />
     );
   }
-  if (!user) return null;
   if (permissions.isError) {
     return (
       <div className="grid min-h-screen place-items-center p-6">

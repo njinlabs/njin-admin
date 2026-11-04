@@ -6,7 +6,6 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { CookiesProvider } from "react-cookie";
 import { renderToString } from "react-dom/server";
 import { client } from "../../src/lib/client";
 import { createAdminRouter } from "../../src/lib/create-router";
@@ -68,11 +67,9 @@ test("the authorize page sits outside the shell, under the router's bare layout"
   await router.load();
 
   const html = renderToString(
-    <CookiesProvider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </CookiesProvider>,
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
   );
 
   expect(html).toContain('id="bare"');

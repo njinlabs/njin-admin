@@ -16,10 +16,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useCookies } from "react-cookie";
 import { AuthLayout } from "../components/auth-layout";
 import { client } from "../lib/client";
-import { clearSession } from "../lib/session";
+import { endSession } from "../lib/session";
 
 // The query string as the client sent it. Read from the address, not from the router's search
 // (which would turn a `state` of "123" into a number), because the server checks every part.
@@ -60,7 +59,6 @@ const Loading = () => (
 export const AuthorizePage = () => {
   const { user } = useSession();
   const queryClient = useQueryClient();
-  const [, , removeCookie] = useCookies(["token"]);
   const searchStr = useLocation({ select: (location) => location.searchStr });
   const request = useMemo(() => requestOf(searchStr), [searchStr]);
 
@@ -87,10 +85,7 @@ export const AuthorizePage = () => {
   const signOut = useMutation({
     mutationFn: () => logout(client),
     // The login page brings the user back here, and asks again for who they are.
-    onSettled: () => {
-      clearSession(queryClient);
-      removeCookie("token", { path: "/" });
-    },
+    onSettled: () => endSession(queryClient),
   });
 
   const toggle = (scope: string, on: boolean) =>

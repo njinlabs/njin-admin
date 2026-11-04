@@ -113,23 +113,28 @@ TypeScript must run under Bun (`bunx --bun vite build`): Node cannot resolve ext
 
 ## Auth
 
-The server side is njin core's (`src/modules/auth.ts`, `setup.ts`): `POST /api/auth/login` returns a session token in
-JSON, `GET /api/auth/check-token` validates it, `DELETE /api/auth/logout` ends it, `/api/setup` makes the first admin.
-The admin side, in `app/src`:
+The server side is njin core's (`src/modules/auth.ts`, `setup.ts`): `POST /api/auth/login` signs the browser in with an
+HttpOnly `njin_session` cookie (the token is also in the JSON, for clients that are not browsers),
+`GET /api/auth/check-token` validates it, `DELETE /api/auth/logout` ends it and clears the cookie, `/api/setup` makes the
+first admin (and signs them in the same way). The admin side, in `app/src`:
 
-- The token is the `token` cookie, written with `react-cookie` (`useCookies`, `CookiesProvider` in `main.tsx`), path
-  `/`, 30 days. Always path `/`: a narrower one misses the page when the URL has no trailing slash. It is written by
-  script, so it is not `HttpOnly`; that needs the server to set it (see `PLAN.md`, section 5).
-- `components/protected.tsx` guards the pages: no cookie goes to `/login`; otherwise it calls `check-token`, sets the
-  `Authorization` header on the client and drops a token the server refuses; it hands the user from `check-token`
-  (`name`, `email`) to `Shell`. `components/root.tsx` sends every page to `/setup` until the first admin exists. Tests
-  replace both through the `root` and `layout` options of `createAdminRouter`, since they ask the server.
+- The session is that cookie (`SameSite=Strict`, `Path=/api`), so no script here ever holds the token: there is no
+  `Authorization` header and no cookie code in the admin. `createClient` sends credentials and an `X-Requested-With`
+  header on every request; the server asks for it on anything that changes data (its CSRF guard).
+- Who is signed in is a query: `sessionQuery` (`lib/session.ts`, key `["token"]`) calls `check-token`, and `null` means
+  a 401, nobody. Login and setup put the user there with `setQueryData(sessionKey, user)`.
+- `components/protected.tsx` guards the pages: it reads `sessionQuery`, sends nobody to `/login`, shows a retry when the
+  server cannot be reached, and hands the user from `check-token` (`name`, `email`) to `Shell`. `components/root.tsx` sends
+  every page to `/setup` until the first admin exists. Tests replace both through the `root` and `layout` options of
+  `createAdminRouter`, since they ask the server.
 - The menu's Content and Settings entries come from `useQuery(schemaQuery(client))` in `Shell` (`schemaNavs` in
   `lib/registry.tsx` turns the schema into entries), not from a global array: they show skeletons while loading and a
-  retry on failure. `Shell` only mounts after the session is checked, so the `Authorization` header is already set.
+  retry on failure. `Shell` only mounts after the session is checked.
 - Signing out is in `components/user-menu.tsx` (the user at the foot of the sidebar, behind a `ConfirmDialog`): it calls
-  `logout`, removes the cookie and the `["schema"]` and `["model"]` queries, and `Protected` then sends the page to
-  `/login` through the router. Everything cached per session goes through `clearSession` (`lib/session.ts`, which keeps only `setup-status` and `token`), so a new query key needs nothing extra. The same function runs when the server answers 401 to a request carrying the current token (`watchExpiry` in `Protected`): the cookie goes and the router sends the page to `/login`.
+  `logout` and then `endSession` (`lib/session.ts`), which clears everything cached per session (`clearSession`, which keeps
+  only `setup-status` and `token`, so a new query key needs nothing extra) and sets `sessionKey` to `null`; `Protected` then
+  sends the page to `/login` through the router. `endSession` also runs when the server answers 401 to any request but
+  login, `check-token` and logout (`watchExpiry` in `Protected`).
 - What the user may do is `GET /api/auth/permissions`, already worked out by the server (wildcards, `own`/`all`,
   token scopes, `ref`). `Protected` loads it with the user and shows nothing until both are in; pages read them with
   `useSession()`. Use `can`, `canList` and `canOn` (`sdk/api/permissions.ts`) to show only what will work; do not
@@ -252,7 +257,7 @@ a field a newer server adds is left alone rather than blocking the save.
   source: fields, defaults and validation all derive from the server's JSON schema, never a second representation.
 - Change auth or OAuth on the server. A colleague owns it in njin core; the admin only uses it (see "Auth").
 - Change njin core from here without being asked. Core changes (the manifest endpoint, serving plugin files,
-  building local plugins, an `HttpOnly` cookie) are tracked in `PLAN.md`.
+  building local plugins) are tracked in `PLAN.md`.
 - Commit, push or change git config unless asked. `core.autocrlf` is `false` for this repo on purpose.
 - Add kit components that are not in the order in `PLAN.md` (section 4) without asking. Do not bring in a UI library
   other than Base UI for them, or give a component its own colours: tokens only.
