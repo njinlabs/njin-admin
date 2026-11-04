@@ -200,15 +200,15 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 - [x] `definePlugin({ admin: [plugin], permissions })` di core: `admin` berisi lokasi file admin plugin (`import.meta.resolve(...)`), dilayani Vite dev server core lewat `GET /api/admin/manifest` (`adminPluginDev` mengalihkan modul bersama ke `globalThis.__njin`; paket yang bergantung pada React tidak di-pre-bundle),
       `permissions` ditambahkan ke katalog izin (`buildCatalog`, `GET /api/access/catalog`, `/api/auth/permissions`),
       `plugin(type, [name, options])` di data type. Tes di `tests/core` dan `tests/modules/plugin_permissions.test.ts`.
-- [ ] Tooling build plugin admin yang mengisi lokasi build ke objek `admin` (entry/styles) supaya manifest bisa dibuat.
-- [ ] Plugin lokal tanpa paket npm (`admin.plugins` di config).
-- [ ] `GET /api/admin/manifest`, termasuk `styles` per plugin.
-- [ ] Layani `/_admin/plugins/*` (pakai `resolveSafePath`).
-- [ ] `njin build`/`njin dev` membuild plugin lokal dengan `adminPluginConfig`
+- [x] Tooling build plugin admin yang mengisi lokasi build ke objek `admin` (entry/styles) supaya manifest bisa dibuat.
+- [x] Plugin lokal tanpa paket npm (`admin.plugins` di config).
+- [x] `GET /api/admin/manifest`, termasuk `styles` per plugin.
+- [x] Layani `/_admin/plugins/*` (pakai `resolveSafePath`).
+- [x] `njin build`/`njin dev` membuild plugin lokal dengan `adminPluginConfig`
       (`vite` sebagai peer/optional dependency, hanya wajib bila `admin.plugins` terisi).
-- [ ] Tes di core untuk semuanya.
-- [ ] Distribusi admin: aset rilis GitHub dan `adminVersion`, menggantikan `template/_admin` yang sudah usang.
-- [ ] Catat perubahan breaking `GET /api/schema` (`data` jadi `models`) di CHANGELOG bila ada.
+- [x] Tes di core untuk semuanya.
+- [x] Distribusi admin: aset rilis GitHub dan `adminVersion`, menggantikan `template/_admin` yang sudah usang.
+- [x] Catat perubahan breaking `GET /api/schema` (`data` jadi `models`) di CHANGELOG bila ada.
 
 ## 7. Tooling dan rilis
 
@@ -219,7 +219,7 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
       dengan `packages/package.json`), lalu publish `@njinlabs/njin-admin` ke npm (provenance, prerelease di dist-tag sendiri)
       dan build `app/` jadi `njin-admin-<tag>.tar.gz` (isi `dist/` langsung, plus `.sha256`) yang dilampirkan ke rilis.
       CodeQL di `codeql.yml`. Belum dicoba sungguhan: butuh secret `NPM_TOKEN` dan rilis pertama.
-- [ ] Dokumentasi untuk penulis plugin (cara membuat, membuild, CSS, API yang tersedia).
+- [x] Dokumentasi untuk penulis plugin (cara membuat, membuild, CSS, API yang tersedia).
 - [x] Remote git dan push (`github.com/njinlabs/njin-admin`).
 
 ## Urutan yang disarankan
