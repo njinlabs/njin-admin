@@ -109,6 +109,11 @@ export const AuthLayout = ({
 
     <section className="flex items-center justify-center bg-background px-6 py-12">
       <div className="w-full max-w-sm space-y-8">
+        <img
+          src={`${import.meta.env.BASE_URL}logo.svg`}
+          alt="njin"
+          className="h-10 w-auto"
+        />
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold">{title}</h1>
           <p className="text-muted-foreground">{description}</p>

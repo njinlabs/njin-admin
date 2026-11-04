@@ -145,10 +145,11 @@ export const Shell = ({ user }: { user: Row }) => {
       >
         <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
           <Link to="/" className="flex items-center gap-2 font-semibold">
-            <span className="grid size-6 place-items-center rounded-control bg-primary font-mono text-sm text-primary-foreground">
-              n
-            </span>
-            njin
+            <img
+              src={`${import.meta.env.BASE_URL}logo.svg`}
+              alt="njin"
+              className="h-7 w-auto"
+            />
           </Link>
         </div>
 
