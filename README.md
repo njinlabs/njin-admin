@@ -55,7 +55,9 @@ What it can add:
 
 - `navs`: menu entries (section "Plugins"), with `order` and `requires`.
 - `routes`: pages, with `requires`.
-- `widgets`: tiles of the dashboard (`size`, `order`, `requires`).
+- `widgets`: tiles a user can add to their dashboard (`id`, `title`, `size`, `order`, `requires`). The dashboard starts
+  empty; each user picks from the widgets they may see (the admin's own and the plugins'), so a widget is listed
+  only to people who pass its `requires`.
 - `fields`: input renderers for fields the server tagged with `plugin(text(), ["<name>:<renderer>", options])`.
   `fields: { slugify: ({ value, onChange, options, values }) => ... }` is used for `"reports:slugify"`.
 

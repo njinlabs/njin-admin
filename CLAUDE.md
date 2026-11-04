@@ -9,6 +9,7 @@ is done and what is left; `README.md` has the layout and how to run it.
 - `app/`: the admin (Vite 8, React 19, TanStack Router and Query, Tailwind v4). Loads plugins at runtime.
   `src/lib/` has the `client` (the one axios instance), the `registry` (menus, pages, plugin and schema loading) and
   `createAdminRouter`; `src/components/shell.tsx` is the layout with the sidebar.
+  `src/widgets/` are the dashboard's own tiles (see "The dashboard").
 - `packages/`: `@njinlabs/njin-admin`, one library with subpath exports:
   - `./sdk`: what a plugin imports. `defineAdminPlugin`; `sdk/api` (`index.ts` client, manifest and `toApiError`;
     `model.ts` records and their query and mutation options; `vars.ts` settings; `file.ts`, `analytics.ts`, `setup.ts`);
@@ -188,6 +189,25 @@ a field a newer server adds is left alone rather than blocking the save.
 - Loading looks like what is loading: `FormSkeleton` follows the model's fields and the grid, `TableSkeleton` the list;
   both hold the header buttons in place. Do not use a single block.
 - `FieldError` works with or without a `Field` around it, so a message about the whole form (a failed request) can use it.
+
+## The dashboard
+
+`app/src/pages/dashboard.tsx`, `app/src/lib/dashboard.ts`, widgets in `app/src/widgets/`.
+
+- It starts **empty**: nobody sees a tile they did not add. "Edit" (header, right) turns on editing: drag a tile by its handle
+  to move it (`@dnd-kit/react`), remove it, or "Add widget" from the ones the user may see. Outside editing it only shows.
+- A widget is `{ key, id, title, size, requires, component }`. The admin's own are `widgets.main` (`widgets/index.ts`, keys
+  `admin:<id>`), listed in `registry.tsx` like `navs.main` and `routes.main`; a plugin's go to `widgets.plugins` through
+  `registerPlugin`, which stamps `key = "<plugin>:<id>"`. The dashboard reads both through `visible()`, so `requires`
+  decides what can be added and shown.
+- The user's choice is the ordered list of keys, kept per user in `localStorage` (`njin-admin.dashboard.<userId>`) because
+  the server has nowhere to keep it yet; only `readLayout`/`writeLayout` touch it. A saved key that is not available now
+  (permission lost, plugin gone) is skipped but kept, so it returns with the access.
+- Size is the widget's (`sm`, `md`, `lg`, `full`), never the user's. The grid follows the width of its own box (`@container`):
+  1 column, 2, then 6, where `sm` takes a third, `md` half, `lg` two thirds.
+- A widget draws its content only; the tile (title, drag handle, remove, error boundary) is the dashboard's. Give it a
+  skeleton for loading and a message for failure, as the built-in ones do. Charts use recharts with the admin's tokens
+  (`var(--color-primary)`), not fixed colours.
 
 ## The UI kit
 
