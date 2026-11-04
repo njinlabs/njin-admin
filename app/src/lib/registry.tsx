@@ -98,7 +98,10 @@ export const loadPlugins = async () => {
   const problems: string[] = [];
   // njin core does not serve the manifest yet. Until it does the request fails (or the dev server
   // answers with the page itself), and there are simply no plugins.
-  const manifest = await getManifest(client).catch(() => null);
+  // The timeout matters: the page waits for this before it draws anything.
+  const manifest = await getManifest(client, { timeout: 5000 }).catch(
+    () => null,
+  );
   if (!Array.isArray(manifest?.plugins)) return problems;
 
   const { plugins } = manifest;
@@ -112,13 +115,21 @@ export const loadPlugins = async () => {
       continue;
     }
 
-    for (const href of styles) addStylesheet(href);
+    // A plugin that cannot be loaded (404, a script that throws) must not stop the admin from
+    // drawing: main.tsx waits for this, so an uncaught error here leaves the page blank.
+    try {
+      for (const href of styles) addStylesheet(href);
 
-    const plugin: { default: AdminPluginConfig } = await import(
-      /* @vite-ignore */
-      entry
-    );
-    registerPlugin(plugin.default);
+      const plugin: { default: AdminPluginConfig } = await import(
+        /* @vite-ignore */
+        entry
+      );
+      registerPlugin(plugin.default);
+    } catch (error) {
+      const problem = `Plugin "${name}" could not be loaded: ${error instanceof Error ? error.message : String(error)}`;
+      console.error(problem, error);
+      problems.push(problem);
+    }
   }
 
   return problems;

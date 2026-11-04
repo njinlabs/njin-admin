@@ -1,4 +1,8 @@
-import axios, { type AxiosInstance, isAxiosError } from "axios";
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  isAxiosError,
+} from "axios";
 
 export * from "./analytics";
 export * from "./auth";
@@ -35,8 +39,11 @@ export type ManifestPlugin = {
 export type Manifest = { plugins: ManifestPlugin[] };
 
 // GET /api/admin/manifest
-export const getManifest = async (client: AxiosInstance): Promise<Manifest> => {
-  const { data } = await client.get<Manifest>("/api/admin/manifest");
+export const getManifest = async (
+  client: AxiosInstance,
+  config?: AxiosRequestConfig,
+): Promise<Manifest> => {
+  const { data } = await client.get<Manifest>("/api/admin/manifest", config);
 
   return data;
 };
