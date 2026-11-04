@@ -1,11 +1,12 @@
 import { permissionsQuery, SessionContext } from "@njinlabs/njin-admin/sdk";
 import { Button } from "@njinlabs/njin-admin/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Navigate, Outlet, useLocation } from "@tanstack/react-router";
+import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { client } from "../lib/client";
 import { endSession, sessionQuery, watchExpiry } from "../lib/session";
 import { Shell } from "./shell";
+import { Status } from "./status";
 
 // The pages behind the login. The session (an HttpOnly cookie the page cannot see) is checked with
 // the server before anything is shown; if it is refused, the user goes back to the login page.
@@ -40,7 +41,22 @@ export const Protected = ({ bare }: { bare?: boolean }) => {
     [queryClient],
   );
 
-  if (session.isPending) return null;
+  // `Navigate` navigates again whenever its props are a new object, which is every render; while
+  // the router is still moving that can repeat. Once per sign-out, here.
+  const navigate = useNavigate();
+  const signedOut = session.isSuccess && !user;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `here` and `expired` are read once, when the sign-out is noticed
+  useEffect(() => {
+    if (!signedOut) return;
+    navigate({
+      to: "/login",
+      search: here ? ({ redirect: here } as never) : undefined,
+      state: expired ? ({ expired: true } as never) : undefined,
+      replace: true,
+    });
+  }, [signedOut, navigate]);
+
+  if (session.isPending) return <Status>Checking your session…</Status>;
   if (session.isError) {
     return (
       <div className="grid min-h-screen place-items-center p-6">
@@ -54,13 +70,7 @@ export const Protected = ({ bare }: { bare?: boolean }) => {
     );
   }
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        search={here ? ({ redirect: here } as never) : undefined}
-        state={expired ? ({ expired: true } as never) : undefined}
-      />
-    );
+    return <Status>Redirecting…</Status>;
   }
   if (permissions.isError) {
     return (
@@ -74,7 +84,7 @@ export const Protected = ({ bare }: { bare?: boolean }) => {
       </div>
     );
   }
-  if (!permissions.data) return null;
+  if (!permissions.data) return <Status>Loading your access…</Status>;
 
   return (
     <SessionContext value={{ user, permissions: permissions.data, client }}>
