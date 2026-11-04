@@ -53,21 +53,41 @@ const FileSource = createContext<{
 // with `plugin(...)`.
 type Renderers = Record<string, FC<FieldProps>>;
 
-const PluginSource = createContext<Renderers>({});
+// `form` is the root field list, to know which values are a map of languages.
+const PluginSource = createContext<{
+  renderers: Renderers;
+  form: readonly Form[];
+}>({
+  renderers: {},
+  form: [],
+});
 
 // A plugin's input, handed the whole form so it can follow another field. The form's values are
 // read here and not in the field above, so only a field drawn by a plugin re-renders on every key.
+// A field with a value per language is handed as the value of the language being edited, so a
+// renderer following `title` gets text and not `{ en: "..." }`.
 const PluginInput = ({
   Renderer,
   control,
   ...props
-}: Omit<FieldProps, "values"> & {
+}: Omit<FieldProps, "values" | "locale"> & {
   Renderer: FC<FieldProps>;
   control: Control<FieldValues>;
 }) => {
-  const values = useWatch({ control }) as Record<string, unknown>;
+  const raw = useWatch({ control }) as Record<string, unknown>;
+  const { form } = use(PluginSource);
+  const { locale } = use(RelationSource);
+  const values = { ...raw };
 
-  return <Renderer {...props} values={values} />;
+  for (const item of form) {
+    const map = raw[item.key];
+
+    if (item.localized && locale && map && typeof map === "object") {
+      values[item.key] = (map as Record<string, unknown>)[locale];
+    }
+  }
+
+  return <Renderer {...props} values={values} locale={locale} />;
 };
 
 // Whether `RenderForm` has an input for the field yet. A page that submits only what it draws
@@ -305,7 +325,7 @@ const FieldInput = ({
   disabled,
   action,
 }: FieldInputProps) => {
-  const renderers = use(PluginSource);
+  const { renderers } = use(PluginSource);
   const Renderer = item.plugin && renderers[item.plugin.name];
   const required = marksRequired(item);
 
@@ -676,7 +696,7 @@ export const RenderForm = <T extends FieldValues>({
 }: RenderFormProps<T>) => (
   <FileSource value={{ picker: filePicker, imageSrc }}>
     <RelationSource value={{ load: loadRelated, locale }}>
-      <PluginSource value={renderers ?? {}}>
+      <PluginSource value={{ renderers: renderers ?? {}, form }}>
         {/* The paths come from the schema the values were typed from, but only at runtime. */}
         <Fields
           items={form}

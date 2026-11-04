@@ -340,4 +340,40 @@ describe("RenderForm with a plugin's renderer", () => {
 
     expect(html).toContain('value="hello"');
   });
+
+  test("with languages, the renderer gets the locale and the followed field in that language", () => {
+    const localized: Form[] = [
+      { key: "title", label: "Title", type: "text", localized: true },
+      {
+        key: "slug",
+        label: "Slug",
+        type: "text",
+        localized: true,
+        plugin: { name: "reports:slugify", options: { from: "title" } },
+      },
+    ];
+    const Demo = () => {
+      const { control } = useForm({
+        defaultValues: {
+          title: { en: "Hello", id: "Halo" },
+          slug: { en: "hello", id: "halo" },
+        },
+      });
+
+      return (
+        <RenderForm
+          form={localized}
+          control={control}
+          locale="id"
+          renderers={{
+            "reports:slugify": ({ value, values, locale }) => (
+              <i>{`${value}|${values.title}|${locale}`}</i>
+            ),
+          }}
+        />
+      );
+    };
+
+    expect(renderToString(<Demo />)).toContain("halo|Halo|id");
+  });
 });

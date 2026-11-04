@@ -52,8 +52,11 @@ export type FieldProps = {
   field: Omit<Form, "key">;
   // What the server wrote after the name: `plugin(text(), ["reports:slugify", options])`.
   options: unknown;
-  // Everything in the form right now, to follow another field.
+  // Everything in the form right now, to follow another field. A field with a value per language
+  // is already the value of `locale`, not the map of languages.
   values: Record<string, unknown>;
+  // The language being edited, when the model has languages. `value` is that language's too.
+  locale?: string;
 };
 
 export type AdminPluginConfig = {
