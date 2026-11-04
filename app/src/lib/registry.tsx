@@ -26,6 +26,7 @@ import { GroupFormPage } from "../pages/users/group-form";
 import { GroupsListPage } from "../pages/users/groups-list";
 import { UserFormPage } from "../pages/users/user-form";
 import { UsersListPage } from "../pages/users/users-list";
+import { mainWidgets } from "../widgets";
 import { client } from "./client";
 
 export const navs = {
@@ -49,8 +50,14 @@ export const navs = {
   plugins: [] as NavEntry[],
 };
 
-// Tiles of the dashboard, all from plugins for now.
-export const widgets = { plugins: [] as Widget[] };
+// Tiles of the dashboard: the admin's own, then the plugins'.
+// `key` is "<plugin>:<id>": a widget id is only unique within its plugin, and the dashboard
+// remembers a person's choices by this key.
+export type RegisteredWidget = Widget & { key: string };
+export const widgets = {
+  main: mainWidgets,
+  plugins: [] as RegisteredWidget[],
+};
 
 // What plugins draw fields with, by "<plugin>:<renderer>".
 export const fieldRenderers: Record<string, FC<FieldProps>> = {};
@@ -112,7 +119,12 @@ export const registerPlugin = ({
 }: AdminPluginConfig) => {
   navs.plugins.push(...pluginNavs);
   routes.plugins.push(...pluginRoutes);
-  widgets.plugins.push(...pluginWidgets);
+  widgets.plugins.push(
+    ...pluginWidgets.map((widget) => ({
+      ...widget,
+      key: `${name}:${widget.id}`,
+    })),
+  );
 
   for (const [renderer, component] of Object.entries(fields)) {
     const key = `${name}:${renderer}`;

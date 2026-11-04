@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
   createClient,
   type Permissions,
@@ -97,6 +97,25 @@ describe("registerPlugin", () => {
 });
 
 describe("the dashboard", () => {
+  // These tests are about what plugins add, so the admin's own tiles step aside.
+  const own = [...widgets.main];
+  beforeAll(() => {
+    widgets.main.length = 0;
+  });
+  afterAll(() => {
+    widgets.main.push(...own);
+  });
+
+  // A dashboard starts empty, so the person "added" these before the page is drawn.
+  const chosen = (...keys: string[]) => {
+    Object.assign(globalThis, {
+      localStorage: { getItem: () => JSON.stringify(keys) },
+    });
+  };
+  afterAll(() => {
+    Reflect.deleteProperty(globalThis, "localStorage");
+  });
+
   const render = (permissions: Permissions) =>
     renderToString(session(permissions, <DashboardPage />));
 
@@ -106,7 +125,22 @@ describe("the dashboard", () => {
     expect(render(reports)).toContain("Nothing here yet");
   });
 
-  test("shows the widgets the user may see, and not the others", () => {
+  test("starts empty: a widget nobody added is not drawn", () => {
+    registerPlugin({
+      name: "reports",
+      widgets: [{ id: "all", component: () => <p>everyone widget</p> }],
+    });
+    chosen();
+
+    const html = render(reports);
+    widgets.plugins.length = 0;
+
+    expect(html).toContain("Your dashboard is empty");
+    expect(html).not.toContain("everyone widget");
+  });
+
+  test("shows the chosen widgets the user may see, and not the others", () => {
+    chosen("reports:total", "reports:all");
     registerPlugin({
       name: "reports",
       widgets: [
@@ -131,6 +165,7 @@ describe("the dashboard", () => {
   });
 
   test("a widget that throws does not take the others down", () => {
+    chosen("reports:broken", "reports:fine");
     registerPlugin({
       name: "reports",
       widgets: [
@@ -148,5 +183,31 @@ describe("the dashboard", () => {
     widgets.plugins.length = 0;
 
     expect(html).toContain("fine widget");
+  });
+});
+
+describe("the admin's own widgets", () => {
+  test("have unique keys under the admin's own prefix", () => {
+    const keys = widgets.main.map(({ key }) => key);
+
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const widget of widgets.main) {
+      expect(widget.key).toBe(`admin:${widget.id}`);
+    }
+  });
+
+  test("the analytics ones ask for analytics", () => {
+    const needs = widgets.main
+      .filter(({ requires }) => requires?.resource === "analytics")
+      .map(({ id }) => id);
+
+    expect(needs).toEqual([
+      "pageviews",
+      "visitors",
+      "traffic",
+      "top-pages",
+      "referrers",
+      "countries",
+    ]);
   });
 });

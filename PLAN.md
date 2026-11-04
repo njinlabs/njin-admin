@@ -98,7 +98,17 @@ teruji sendiri.
       dan analytics, sakelar Full access); nilainya tetap daftar string grant, wildcard yang tak punya sel ditampilkan
       sebagai badge dan ikut tersimpan (`splitGrants`/`joinGrants` di `sdk/api/grants.ts`). Kit bertambah: `Badge`,
       `Checkbox`, `MultiSelect`. Belum dicoba di browser.
-- [ ] **Analytics** dan **Dashboard**.
+- [x] **Dashboard** (`pages/dashboard.tsx`, `lib/dashboard.ts`): kosong secara default. Tombol Edit di kanan header membuka mode
+      ubah: seret untuk menukar posisi (`@dnd-kit/react`), hapus, dan Add widget (dialog berisi widget yang boleh dilihat user,
+      dari bawaan dan plugin). Ukuran ditentukan widget (`size`), grid 1/2/6 kolom mengikuti lebar halaman, baris
+      selebar tile tertinggi. Disimpan di `localStorage` per user (`njin-admin.dashboard.<id>`) sampai server punya tempatnya.
+      Kunci widget `"<plugin>:<id>"`. Belum dicoba di browser.
+- [x] **Widget bawaan** (`app/src/widgets/`, daftar `widgets.main` di `registry.tsx` seperti `navs.main`/`routes.main`, kunci
+      `admin:<id>`), gaya dari admin lama (recharts): Total pageviews dan Unique visitors (tren terhadap periode sebelumnya),
+      Traffic (grafik area 7/30/90 hari), By page / By referrer / By country (daftar dengan bar proporsional), Recent content,
+      Waiting to be published (model draftable yang boleh dipublish) dan Quick actions. Belum dicoba di browser: urut `updatedAt`
+      dan filter `status $in` perlu dicek ke server. Belum: jumlah konten, file terbaru, akun saya.
+- [ ] **Analytics** (halaman sendiri).
 - [x] Editor richtext (TipTap, konfigurasi dari admin lama, gambar lewat pemilih file dengan alt dan sumber teroptimasi
       lewat `/img`) dan pemilih relasi/file di form. Belum dicoba di browser.
 
