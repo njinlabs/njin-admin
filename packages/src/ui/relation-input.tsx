@@ -131,7 +131,7 @@ export const RelationInput = ({
     <Combobox
       {...shared}
       value={chosen[0] ? toOption(chosen[0], labelKey, locale) : null}
-      onValueChange={(picked) => onChange(picked ? pick(picked) : undefined)}
+      onValueChange={(picked) => onChange(picked ? pick(picked) : null)}
     />
   );
 };

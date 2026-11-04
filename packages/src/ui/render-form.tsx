@@ -94,6 +94,14 @@ const emptyOf = (item: Item): unknown => {
   return item.type === "text" || item.type === "email" ? "" : undefined;
 };
 
+// The array with the element at `index` exchanged with its neighbour (`by` is -1 or 1).
+const swap = (values: unknown[], index: number, by: number) => {
+  const moved = [...values];
+  [moved[index], moved[index + by]] = [moved[index + by], moved[index]];
+
+  return moved;
+};
+
 type FieldInputProps = {
   item: Item;
   // The dotted path of the value in the form: "title", "author.name", "tags.2".
@@ -137,15 +145,78 @@ const RemoveButton = ({
   </Button>
 );
 
-const LabelRow = ({ label, action }: { label: string; action?: ReactNode }) =>
-  action ? (
+const LabelRow = ({
+  label,
+  action,
+  required,
+}: {
+  label: string;
+  action?: ReactNode;
+  required?: boolean;
+}) => {
+  const text = (
+    <FieldLabel>
+      {label}
+      {required && (
+        <span className="ml-0.5 text-danger" aria-hidden="true">
+          *
+        </span>
+      )}
+    </FieldLabel>
+  );
+
+  return action ? (
     <div className="flex items-center justify-between gap-2">
-      <FieldLabel>{label}</FieldLabel>
+      {text}
       {action}
     </div>
   ) : (
-    <FieldLabel>{label}</FieldLabel>
+    text
   );
+};
+
+// A switch always has a value and a box of fields or a list can be empty, so only an input that
+// can be left blank carries the mark.
+const marksRequired = (item: Item) =>
+  !!item.required &&
+  !["boolean", "object", "array", "multi_relation", "multi_file"].includes(
+    item.type,
+  );
+
+const Chevron = ({ up }: { up?: boolean }) => (
+  <svg
+    viewBox="0 0 16 16"
+    className="size-4"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    aria-hidden="true"
+  >
+    <path d={up ? "m4 10 4-4 4 4" : "m4 6 4 4 4-4"} />
+  </svg>
+);
+
+const MoveButton = ({
+  up,
+  onClick,
+  disabled,
+}: {
+  up?: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) => (
+  <Button
+    type="button"
+    size="icon"
+    variant="ghost"
+    aria-label={up ? "Move up" : "Move down"}
+    disabled={disabled}
+    onClick={onClick}
+    className="size-7"
+  >
+    <Chevron up={up} />
+  </Button>
+);
 
 // On the top border of a box, where its legend is, so the box needs no line of its own.
 const FieldsetAction = ({ children }: { children: ReactNode }) => (
@@ -236,6 +307,7 @@ const FieldInput = ({
 }: FieldInputProps) => {
   const renderers = use(PluginSource);
   const Renderer = item.plugin && renderers[item.plugin.name];
+  const required = marksRequired(item);
 
   return (
     <Controller
@@ -248,7 +320,11 @@ const FieldInput = ({
         if (Renderer) {
           return (
             <Field invalid={invalid} disabled={disabled}>
-              <LabelRow label={item.label} action={action} />
+              <LabelRow
+                label={item.label}
+                action={action}
+                required={required}
+              />
               <PluginInput
                 Renderer={Renderer}
                 control={control}
@@ -271,7 +347,11 @@ const FieldInput = ({
           case "email":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <Input
                   name={field.name}
                   ref={field.ref}
@@ -286,7 +366,11 @@ const FieldInput = ({
           case "numeric":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <NumberInput
                   value={field.value}
                   onValueChange={field.onChange}
@@ -313,7 +397,11 @@ const FieldInput = ({
           case "select":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <Select
                   options={Object.values(item.options ?? {}).map((value) => ({
                     value: String(value),
@@ -329,7 +417,11 @@ const FieldInput = ({
           case "datepicker":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <DatePicker
                   value={field.value}
                   onChange={field.onChange}
@@ -342,7 +434,11 @@ const FieldInput = ({
           case "multi_relation":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <RelationField
                   item={item}
                   value={field.value}
@@ -356,7 +452,11 @@ const FieldInput = ({
           case "multi_file":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <FileField
                   multiple={item.type === "multi_file"}
                   value={field.value}
@@ -369,7 +469,11 @@ const FieldInput = ({
           case "richtext":
             return (
               <Field invalid={invalid} disabled={disabled}>
-                <LabelRow label={item.label} action={action} />
+                <LabelRow
+                  label={item.label}
+                  action={action}
+                  required={required}
+                />
                 <RichText value={field.value} onChange={field.onChange} />
                 {error}
               </Field>
@@ -398,6 +502,11 @@ const FieldInput = ({
 
             if (!element) return <></>;
 
+            const atMin =
+              item.minItems != null && values.length <= item.minItems;
+            const atMax =
+              item.maxItems != null && values.length >= item.maxItems;
+
             // The elements are rendered from the array in the form, by position, so removing one
             // in the middle shows the rest as they are.
             return (
@@ -418,12 +527,27 @@ const FieldInput = ({
                     control={control}
                     disabled={disabled}
                     action={
-                      <RemoveButton
-                        disabled={disabled}
-                        onClick={() =>
-                          field.onChange(values.filter((_, at) => at !== index))
-                        }
-                      />
+                      <span className="flex items-center">
+                        <MoveButton
+                          up
+                          disabled={disabled || index === 0}
+                          onClick={() =>
+                            field.onChange(swap(values, index, -1))
+                          }
+                        />
+                        <MoveButton
+                          disabled={disabled || index === values.length - 1}
+                          onClick={() => field.onChange(swap(values, index, 1))}
+                        />
+                        <RemoveButton
+                          disabled={disabled || atMin}
+                          onClick={() =>
+                            field.onChange(
+                              values.filter((_, at) => at !== index),
+                            )
+                          }
+                        />
+                      </span>
                     }
                   />
                 ))}
@@ -431,7 +555,8 @@ const FieldInput = ({
                   type="button"
                   size="sm"
                   variant="outline"
-                  disabled={disabled}
+                  disabled={disabled || atMax}
+                  title={atMax ? `At most ${item.maxItems}` : undefined}
                   onClick={() => field.onChange([...values, emptyOf(element)])}
                 >
                   Add

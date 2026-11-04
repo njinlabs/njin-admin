@@ -4,6 +4,7 @@ import {
   getDefaultValues,
   localizedDefault,
   toForm,
+  toInput,
   transformSchema,
 } from "../../../src/sdk/schema/schema";
 import article from "../../fixtures/article-schema.json";
@@ -383,5 +384,140 @@ describe("a field tagged by a plugin", () => {
 
     expect(schema.safeParse({ slug: "a", title: "b" }).success).toBe(true);
     expect(schema.safeParse({ slug: 1, title: "b" }).success).toBe(false);
+  });
+});
+
+describe("what the form knows about a field being required", () => {
+  const json = {
+    type: "object",
+    properties: {
+      title: { label: "Title", renderAs: "text", type: "string" },
+      slug: { label: "Slug", renderAs: "text", type: "string" },
+      note: {
+        anyOf: [
+          { label: "Note", renderAs: "text", type: "string" },
+          { type: "null" },
+        ],
+      },
+      views: {
+        default: 0,
+        type: "number",
+        label: "Views",
+        renderAs: "numeric",
+      },
+      cover: {
+        label: "Cover",
+        renderAs: "file",
+        model: "file",
+        type: "string",
+      },
+      links: {
+        label: "Links",
+        renderAs: "array",
+        type: "array",
+        minItems: 1,
+        maxItems: 3,
+        items: { label: "Link", renderAs: "text", type: "string" },
+      },
+    },
+    required: ["title", "note", "views", "links"],
+  };
+  const { schema, form } = build(json);
+  const by = (key: string) => form.find((f) => f.key === key)!;
+
+  test("marks only what the server needs filled in", () => {
+    expect(by("title").required).toBe(true);
+    expect(by("slug").required).toBe(false); // optional
+    expect(by("note").required).toBe(false); // may be null
+    expect(by("views").required).toBe(false); // has a default
+    expect(by("cover").required).toBe(false);
+  });
+
+  test("reads the nullable flag and the length limits of an array", () => {
+    expect(by("note").nullable).toBe(true);
+    expect(by("slug").nullable).toBe(false);
+    expect(by("links")).toMatchObject({ minItems: 1, maxItems: 3 });
+  });
+
+  test("a required text is not satisfied by an empty one", () => {
+    const ok = { title: "A", note: null, links: ["x"] };
+
+    expect(schema.safeParse(ok).success).toBe(true);
+    expect(schema.safeParse({ ...ok, title: "" }).success).toBe(false);
+    expect(schema.safeParse({ ...ok, slug: "" }).success).toBe(true);
+  });
+
+  test("a cleared optional link is null, and a required one cannot be", () => {
+    const ok = { title: "A", note: null, links: ["x"] };
+
+    expect(schema.safeParse({ ...ok, cover: null }).success).toBe(true);
+    expect(schema.safeParse({ ...ok, cover: { id: "f1" } }).data?.cover).toBe(
+      "f1",
+    );
+    expect(
+      build({
+        ...json,
+        required: [...json.required, "cover"],
+      }).schema.safeParse({
+        ...ok,
+        cover: null,
+      }).success,
+    ).toBe(false);
+  });
+
+  test("the array keeps refusing too many or too few elements", () => {
+    expect(
+      schema.safeParse({ title: "A", note: null, links: [] }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({ title: "A", note: null, links: ["a", "b", "c", "d"] })
+        .success,
+    ).toBe(false);
+  });
+
+  test("toInput leaves out an empty text, or sends null where the field may be", () => {
+    const sent = toInput(form, {
+      title: "A",
+      slug: "",
+      note: "",
+      views: 2,
+      links: ["", "x"],
+    });
+
+    expect(sent).toEqual({
+      title: "A",
+      note: null,
+      views: 2,
+      links: ["", "x"],
+    });
+  });
+
+  test("toInput cleans inside objects and the objects of an array", () => {
+    const nested = build({
+      type: "object",
+      properties: {
+        seo: {
+          type: "object",
+          label: "SEO",
+          renderAs: "object",
+          properties: { t: { label: "T", renderAs: "text", type: "string" } },
+        },
+        rows: {
+          type: "array",
+          label: "Rows",
+          renderAs: "array",
+          items: {
+            type: "object",
+            label: "Row",
+            renderAs: "object",
+            properties: { k: { label: "K", renderAs: "text", type: "string" } },
+          },
+        },
+      },
+    });
+
+    expect(
+      toInput(nested.form, { seo: { t: "" }, rows: [{ k: "" }, { k: "a" }] }),
+    ).toEqual({ seo: {}, rows: [{}, { k: "a" }] });
   });
 });

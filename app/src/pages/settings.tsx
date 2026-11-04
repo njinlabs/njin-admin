@@ -9,6 +9,7 @@ import {
   readRecords,
   schemaQuery,
   toApiError,
+  toInput,
   updateVarsMutation,
   useSession,
   varsQuery,
@@ -174,7 +175,7 @@ const SettingsForm = ({
   // saved again.
   const submit = (publish: boolean) =>
     form.handleSubmit(async (values: Values) => {
-      const input = {
+      const input = toInput(drawn, {
         ...values,
         ...Object.fromEntries(
           localized.map((key) => [
@@ -188,7 +189,7 @@ const SettingsForm = ({
             ),
           ]),
         ),
-      };
+      });
       update.reset();
       move.reset();
 

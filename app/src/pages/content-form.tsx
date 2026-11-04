@@ -13,6 +13,7 @@ import {
   removeLocaleMutation,
   schemaQuery,
   toApiError,
+  toInput,
   updateRecordMutation,
   useSession,
 } from "@njinlabs/njin-admin/sdk";
@@ -205,12 +206,12 @@ const ModelForm = ({
   // saved again.
   const submit = (publish: boolean) =>
     form.handleSubmit(async (values: Record<string, unknown>) => {
-      const input = {
+      const input = toInput(drawn, {
         ...values,
         ...Object.fromEntries(
           localized.map((key) => [key, withoutEmpty(values[key])]),
         ),
-      };
+      });
       create.reset();
       update.reset();
       move.reset();

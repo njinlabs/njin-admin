@@ -23,6 +23,13 @@ export type Form = {
   model?: string;
   labelKey?: string;
   unique?: boolean;
+  // The server will refuse the field left empty: not optional, not nullable and with no default.
+  required?: boolean;
+  // The field may be null: an empty one is sent as null rather than left out.
+  nullable?: boolean;
+  // How many elements an array may hold (`minItems`/`maxItems` of the JSON schema).
+  minItems?: number;
+  maxItems?: number;
   // A field of a model with i18n that has a value per language. `type` and the rest describe the
   // value of one language; the field itself is a map of locale to that value.
   localized?: boolean;
@@ -88,6 +95,15 @@ const unwrap = (value: z.ZodType) => {
   return { type, withMeta, isOptional, isNullable };
 };
 
+const textTypes = ["text", "email", "richtext", "datepicker"];
+
+// What `Form.required` says, read from the wrappers around a field.
+const isRequired = (value: z.ZodType) => {
+  const { withMeta, isOptional, isNullable } = unwrap(value);
+
+  return !isOptional && !isNullable && !(withMeta instanceof z.ZodDefault);
+};
+
 const extractId = (val: unknown): unknown => {
   // Ids are plain strings (a UUID, or what the adapter makes). A picked record comes back as
   // an object with an id, and a link is written as just that id.
@@ -142,6 +158,18 @@ const rewrap = (
 // so it is carried over, or the rebuilt one would accept what the server refuses.
 const checksOf = (schema: z.ZodType) => (schema as any)._zod.def.checks ?? [];
 
+const lengthLimits = (schema: z.ZodType) => {
+  const limits: { minItems?: number; maxItems?: number } = {};
+
+  for (const check of checksOf(schema)) {
+    const { check: kind, minimum, maximum } = check._zod.def;
+    if (kind === "min_length") limits.minItems = minimum;
+    if (kind === "max_length") limits.maxItems = maximum;
+  }
+
+  return limits;
+};
+
 const transformType = (type: z.ZodType): z.ZodType => {
   const { type: inner, withMeta, isOptional, isNullable } = unwrap(type);
   const meta = (withMeta as any).meta?.();
@@ -171,17 +199,19 @@ const perLocaleOf = (value: z.ZodType): z.ZodType | undefined =>
     ? (value.valueType as z.ZodType)
     : (value as any)._zod.def.out?._zod.def.catchall;
 
-const transformField = (value: z.ZodType): z.ZodType => {
+// `perLocale`: the value of one language of a localized field. A language left empty is dropped
+// before it is sent, so it is not held to the field being required.
+const transformField = (value: z.ZodType, perLocale = false): z.ZodType => {
   const { type: original, withMeta, isOptional, isNullable } = unwrap(value);
 
   const meta = (withMeta as any).meta?.();
 
   // Each language is a field of its own, so a file picked in one is reduced to its id like any
   // other, and the map is rebuilt around that.
-  const perLocale = meta?.localized && perLocaleOf(original);
-  if (perLocale) {
+  const ofLocale = meta?.localized && perLocaleOf(original);
+  if (ofLocale) {
     return rewrap(
-      z.record(z.string(), transformField(perLocale)).meta(meta),
+      z.record(z.string(), transformField(ofLocale, true)).meta(meta),
       withMeta,
       isNullable,
       isOptional,
@@ -197,7 +227,14 @@ const transformField = (value: z.ZodType): z.ZodType => {
       .preprocess((val) => (val ? extractId(val) : val), z.string())
       .meta(meta);
 
-    return rewrap(finalField, withMeta, isNullable, isOptional, extractId);
+    // Clearing an optional link sends null, since leaving it out would keep the old one.
+    return rewrap(
+      finalField,
+      withMeta,
+      isNullable || isOptional,
+      isOptional,
+      extractId,
+    );
   }
 
   if (meta?.renderAs === "multi_relation" || meta?.renderAs === "multi_file") {
@@ -211,6 +248,16 @@ const transformField = (value: z.ZodType): z.ZodType => {
     return rewrap(finalField, withMeta, isNullable, isOptional, (val) =>
       Array.isArray(val) ? val.map(extractId) : val,
     );
+  }
+
+  // A text the server needs must not be left empty: "" is not a value for it.
+  if (
+    !perLocale &&
+    original instanceof z.ZodString &&
+    textTypes.includes(meta?.renderAs) &&
+    isRequired(value)
+  ) {
+    return original.min(1, "Required").meta(meta);
   }
 
   return transformType(value);
@@ -240,6 +287,7 @@ const parseArray = (input: z.ZodArray) => {
 
   if (elementType.type === "array") {
     form.element = parseArray(elementType as z.ZodArray);
+    Object.assign(form, lengthLimits(elementType));
   } else if (elementType.type === "object") {
     form.members = toForm(elementType as z.ZodObject);
   }
@@ -284,6 +332,8 @@ export const getDefaultValues = (
 
 const toField = (key: string, rawValue: z.ZodType): Form => {
   const { type: value, withMeta } = unwrap(rawValue);
+  const required = isRequired(rawValue);
+  const nullable = unwrap(rawValue).isNullable;
   const meta: {
     label: string;
     renderAs: Form["type"];
@@ -302,6 +352,8 @@ const toField = (key: string, rawValue: z.ZodType): Form => {
       ...toField(key, perLocale),
       label: meta.label,
       localized: true,
+      required,
+      nullable,
       plugin: pluginOf(meta) ?? toField(key, perLocale).plugin,
     };
   }
@@ -311,6 +363,8 @@ const toField = (key: string, rawValue: z.ZodType): Form => {
     label: meta.label,
     key,
     unique: meta.unique,
+    required,
+    nullable,
     plugin: pluginOf(meta),
   };
 
@@ -326,6 +380,7 @@ const toField = (key: string, rawValue: z.ZodType): Form => {
     meta.renderAs !== "multi_file"
   ) {
     form.element = parseArray(value as z.ZodArray);
+    Object.assign(form, lengthLimits(value));
   } else if (value.type === "enum") {
     form.options = (value as z.ZodEnum).enum;
   } else if (form.type === "relation" || form.type === "multi_relation") {
@@ -342,3 +397,53 @@ export const toForm = <const T extends Readonly<{ [x: string]: z.ZodType }>>(
   Object.entries(input.shape).map(([key, rawValue]) =>
     toField(key, rawValue as z.ZodType),
   );
+
+// What is sent for the values of a form: a text left empty is not "" but nothing (or null where the
+// field may be null, which also clears it on the server). A field with a value per language is
+// left to its own caller, which drops the languages that are empty.
+export const toInput = (
+  form: readonly Pick<
+    Form,
+    "key" | "type" | "nullable" | "members" | "localized" | "element"
+  >[],
+  values: Record<string, unknown>,
+): Record<string, unknown> => {
+  const result = { ...values };
+
+  for (const item of form) {
+    const value = result[item.key];
+    if (item.localized || value === undefined) continue;
+
+    if (textTypes.includes(item.type) && value === "") {
+      if (item.nullable) result[item.key] = null;
+      else delete result[item.key];
+    } else if (item.type === "object" && item.members && isRecord(value)) {
+      result[item.key] = toInput(item.members, value);
+    } else if (item.type === "array" && Array.isArray(value)) {
+      result[item.key] = value.map((element) =>
+        cleanElement(item.element, element),
+      );
+    }
+  }
+
+  return result;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object" && !Array.isArray(value);
+
+// An array element has no key to drop, so an empty text stays what it is; only the objects inside
+// are cleaned.
+const cleanElement = (
+  element: Omit<Form, "key"> | undefined,
+  value: unknown,
+): unknown => {
+  if (element?.type === "object" && element.members && isRecord(value)) {
+    return toInput(element.members, value);
+  }
+  if (element?.type === "array" && Array.isArray(value)) {
+    return value.map((inner) => cleanElement(element.element, inner));
+  }
+
+  return value;
+};

@@ -228,6 +228,64 @@ describe("RenderForm", () => {
     expect(hasInput({ label: "Body", type: "richtext" })).toBe(true);
   });
 
+  test("marks a required input, and shows a select's value as it is", () => {
+    const Marked = () => {
+      const { control } = useForm({
+        defaultValues: { title: "", live: true, status: "in_progress" },
+      });
+
+      return (
+        <RenderForm
+          control={control}
+          form={[
+            { key: "title", label: "Title", type: "text", required: true },
+            { key: "price", label: "Price", type: "numeric" },
+            { key: "live", label: "Live", type: "boolean", required: true },
+            {
+              key: "status",
+              label: "Status",
+              type: "select",
+              options: { in_progress: "in_progress" },
+            },
+          ]}
+        />
+      );
+    };
+    const html = renderToString(<Marked />);
+
+    expect(html.match(/aria-hidden="true">\*</g)).toHaveLength(1);
+    expect(html).toContain("in_progress");
+  });
+
+  test("an array can be reordered, and its limits disable Add and Remove", () => {
+    const Limited = ({ min, max }: { min?: number; max?: number }) => {
+      const { control } = useForm({ defaultValues: { tags: ["a", "b"] } });
+
+      return (
+        <RenderForm
+          control={control}
+          form={[
+            {
+              key: "tags",
+              label: "Tags",
+              type: "array",
+              element: { label: "Tag", type: "text" },
+              minItems: min,
+              maxItems: max,
+            },
+          ]}
+        />
+      );
+    };
+    const free = renderToString(<Limited />);
+    const full = renderToString(<Limited min={2} max={2} />);
+
+    expect(free).toContain('aria-label="Move up"');
+    expect(free).toContain('aria-label="Move down"');
+    expect(free.match(/ disabled=""/g)?.length ?? 0).toBe(2); // first up, last down
+    expect(full.match(/ disabled=""/g)).toHaveLength(2 + 3); // plus both Remove and Add
+  });
+
   test("says so for a type without an input yet", () => {
     const html = renderToString(
       <Demo form={[{ key: "body", label: "Body", type: "map" as never }]} />,

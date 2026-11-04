@@ -161,6 +161,9 @@ a field a newer server adds is left alone rather than blocking the save.
   value, not with `useFieldArray` (it does not take a list of plain values).
 - The layout is a grid whose columns follow the width of its own box (`@container`): two where there is room, the
   fields of `isWideField` (richtext, object, array, `multi_relation`, `multi_file`) across both.
+- Empty values: `Form.required` marks an input (a required text also refuses `""` in the schema); `toInput` runs before every
+  save: an empty text is left out, or `null` where `Form.nullable`; a cleared single relation or file is `null` (optional ones
+  accept it). Arrays follow `minItems`/`maxItems` and can be reordered.
 - Rich text (`RichTextEditor`, TipTap) is the old admin's: StarterKit with Image, a link popover (title, new tab,
   nofollow), images chosen in the file picker (images only) with alt text required, and optimized sources.
 - A field with a value per language (`localized`) comes from the server as a map `{ locale: value }`, which

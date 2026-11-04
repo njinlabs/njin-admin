@@ -32,7 +32,7 @@ export const LocaleTabs = ({
   <div
     data-bleed
     role="tablist"
-    className="sticky top-0 z-10 flex shrink-0 items-center overflow-x-auto border-b border-border bg-background px-4 md:px-8"
+    className="sticky top-0 z-10 flex shrink-0 items-center overflow-x-auto overflow-y-hidden border-b border-border bg-background px-4 md:px-8"
   >
     {codes.map((code) => (
       <button
@@ -42,7 +42,7 @@ export const LocaleTabs = ({
         aria-selected={code === active}
         onClick={() => onSelect(code)}
         className={cn(
-          "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm outline-none transition-colors focus-visible:text-foreground",
+          "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm outline-none transition-colors focus-visible:text-foreground",
           code === active
             ? "border-primary font-medium text-foreground"
             : "border-transparent text-muted-foreground hover:text-foreground",
@@ -64,7 +64,7 @@ export const LocaleTabs = ({
           render={
             <button
               type="button"
-              className="-mb-px shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
+              className="shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
             />
           }
         >

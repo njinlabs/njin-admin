@@ -88,9 +88,7 @@ export const FileInput = ({
             disabled={disabled}
             className="size-7"
             onClick={() =>
-              onChange(
-                multiple ? files.filter((_, at) => at !== index) : undefined,
-              )
+              onChange(multiple ? files.filter((_, at) => at !== index) : null)
             }
           >
             <TrashIcon />
@@ -117,7 +115,7 @@ export const FileInput = ({
         onOpenChange={setOpen}
         multiple={multiple}
         value={files}
-        onChange={(picked) => onChange(multiple ? picked : picked[0])}
+        onChange={(picked) => onChange(multiple ? picked : (picked[0] ?? null))}
       />
     </div>
   );

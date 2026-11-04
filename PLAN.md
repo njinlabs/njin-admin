@@ -24,7 +24,7 @@ Dokumen kerja: apa yang sudah ada, apa yang tersisa, dan urutannya. Ceklis diper
 - [x] Admin di browser sungguhan: halaman plugin tampil, tombolnya bereaksi (hook dari React bersama), `Link`
       berpindah halaman, tombol berwarna dari token. Sudah dicoba pemilik repo.
 - [ ] Dark mode untuk plugin: set gelap token sudah ada di `theme.css`; plugin seharusnya ikut tanpa dibuild ulang,
-      tapi belum dilihat di browser.
+      tapi belum dilihat di browser (dilaporkan pemilik repo sudah dicoba semua; konfirmasi bagian ini).
 
 ## 1. Lapisan data admin
 
@@ -65,52 +65,54 @@ teruji sendiri.
       header Shell lewat `HeaderActions` (portal ke `HeaderSlot`). Lebar kolom per tipe field (`columnSize`) dengan satu baris dan
       "…" bila terlalu panjang, kolom teks pertama menyerap sisa ruang, kolom bisa diseret dan dipilih (menu "Columns"),
       keduanya disimpan per model di browser; thumbnail di sel file; model i18n dibaca dengan bahasa default; skeleton yang
-      mengikuti bentuk daftar. Belum dicoba di browser.
+      mengikuti bentuk daftar.
 - [x] **Content, form Buat/Ubah** (`pages/content-form.tsx`, `RenderForm`): semua 13 tipe field punya input. Model i18n:
       tab bahasa (default, yang sudah terisi, dan "+ Add language"), semua bahasa disimpan sekaligus. Model `draftable`:
       status sebagai lencana di samping judul; tombol Cancel/Discard, Save, Unpublish, Publish (hanya ikon di mobile); Publish
-      menyimpan dulu lalu menerbitkan semua bahasa. Layout dua kolom yang mengikuti lebar kotaknya. Belum dicoba di browser.
+      menyimpan dulu lalu menerbitkan semua bahasa. Layout dua kolom yang mengikuti lebar kotaknya.
 - [x] **Content, filter dan status**: tombol filter (ikon corong, lencana jumlah aturan) di samping Columns membuka dialog;
       tiap baris: field, operator sesuai tipe (`lib/filters.ts`), nilai (teks, angka, tanggal, pilihan, ya/tidak, relasi);
       aturan pada satu field digabung jadi satu objek operator di `filters`. Model draftable punya kolom Status (lencana) dan
       field filter Status; semua model punya filter Created. Tombol di header daftar kini hanya ikon.
 - [x] **Content, form**: tombol hapus satu bahasa (ikon sampah di ujung tab bahasa, dengan konfirmasi), umpan balik setelah Save
       (ikon dan label berubah jadi "Saved" sebentar; record baru membawanya ke halaman edit lewat state router), dan
-      peringatan perubahan yang belum disimpan (`useBlocker` untuk tautan/kembali, `beforeunload` untuk tab). Belum dicoba di browser.
-- [ ] **Content, sisanya**: info wajib/opsional dari schema (tanda bintang, teks kosong jangan dikirim `""`,
-      relation tunggal yang dikosongkan `null`); urut ulang elemen array dan batas
-      `min`/`max` pada tombol Add; label `select` dari i18n; pembatasan jenis file per field (butuh info dari server).
+      peringatan perubahan yang belum disimpan (`useBlocker` untuk tautan/kembali, `beforeunload` untuk tab).
+- [x] **Content, sisanya**: `Form.required`/`nullable`/`minItems`/`maxItems` dibaca dari schema (bintang pada input yang wajib;
+      teks wajib tidak boleh kosong); `toInput` (`sdk/schema`) tidak mengirim teks kosong `""` (null bila field boleh null),
+      relation/file tunggal yang dikosongkan jadi `null`; elemen array bisa dipindah naik/turun; `Add`/`Remove` mengikuti
+      `min`/`max`; label `select` adalah nilainya (server memang tidak punya label).
+- [ ] Pembatasan jenis file per field (butuh info dari server).
 - [x] **Settings** (`pages/settings.tsx`, `/settings/$prefix`): form grup vars dengan `RenderForm`, dibaca/ditulis sekaligus
       (`varsQuery`, `updateVarsMutation`). Grup draftable: lencana status, Discard/Save/Unpublish/Publish (`draftVarsMutation`);
       grup i18n: satu tab per bahasa, semua disimpan bersama. Izin `vars.<prefix>` read/write: tanpa write formnya hanya baca.
       Umpan balik "Saved" dan peringatan perubahan belum disimpan sama seperti form konten. Bagian bersama form konten diekstrak
-      (`ActionButton`, `LocaleTabs`, `withoutEmpty`). Belum dicoba di browser.
+      (`ActionButton`, `LocaleTabs`, `withoutEmpty`).
 - [x] **Files** (`pages/files.tsx`, `components/file-manager.tsx`, `file-picker-dialog.tsx`): grid dengan cari dan infinite
       scroll, unggah banyak berkas dengan panel progres, unduh, salin link, hapus (`ConfirmDialog`), semua mengikuti izin
       `file`. Halaman Files dan pemilih adalah komponen yang sama (`FileManager`); `picker` menambah pilihan satu/banyak,
       dan `FilePickerDialog` menahan pilihan sampai tombol Select. Kit bertambah: `Dialog`. `uploadFile` diperbaiki
       (server membalas array satu elemen) dan melaporkan progres. Pemilih sudah dipasang di form (`file`/`multi_file`) dan di
-      editor richtext (hanya gambar); dalam pemilih grid-nya paling banyak 4 kolom. Belum dicoba di browser.
+      editor richtext (hanya gambar); dalam pemilih grid-nya paling banyak 4 kolom.
 - [x] **Users** (`pages/users/`): daftar user dan daftar access group dalam satu bagian (tab di `/users` dan
       `/users/groups`), form buat/ubah keduanya. Daftar memakai `RecordList` (diekstrak dari daftar konten). Form user:
       field group hanya muncul bila boleh `access_group:update` (server menolak bila tidak). Form group: `GrantsEditor`
       menggambar tabel resource x aksi dari `GET /api/access/catalog` (sel Tidak/Own/All, kotak centang untuk settings
       dan analytics, sakelar Full access); nilainya tetap daftar string grant, wildcard yang tak punya sel ditampilkan
       sebagai badge dan ikut tersimpan (`splitGrants`/`joinGrants` di `sdk/api/grants.ts`). Kit bertambah: `Badge`,
-      `Checkbox`, `MultiSelect`. Belum dicoba di browser.
+      `Checkbox`, `MultiSelect`.
 - [x] **Dashboard** (`pages/dashboard.tsx`, `lib/dashboard.ts`): kosong secara default. Tombol Edit di kanan header membuka mode
       ubah: seret untuk menukar posisi (`@dnd-kit/react`), hapus, dan Add widget (dialog berisi widget yang boleh dilihat user,
       dari bawaan dan plugin). Ukuran ditentukan widget (`size`), grid 1/2/6 kolom mengikuti lebar halaman, baris
       selebar tile tertinggi. Disimpan di `localStorage` per user (`njin-admin.dashboard.<id>`) sampai server punya tempatnya.
-      Kunci widget `"<plugin>:<id>"`. Belum dicoba di browser.
+      Kunci widget `"<plugin>:<id>"`.
 - [x] **Widget bawaan** (`app/src/widgets/`, daftar `widgets.main` di `registry.tsx` seperti `navs.main`/`routes.main`, kunci
       `admin:<id>`), gaya dari admin lama (recharts): Total pageviews dan Unique visitors (tren terhadap periode sebelumnya),
       Traffic (grafik area 7/30/90 hari), By page / By referrer / By country (daftar dengan bar proporsional), Recent content,
-      Waiting to be published (model draftable yang boleh dipublish) dan Quick actions. Belum dicoba di browser: urut `updatedAt`
+      Waiting to be published (model draftable yang boleh dipublish) dan Quick actions. Sudah dicoba di browser. Urut `updatedAt`
       dan filter `status $in` perlu dicek ke server. Belum: jumlah konten, file terbaru, akun saya.
 - [ ] **Analytics** (halaman sendiri).
 - [x] Editor richtext (TipTap, konfigurasi dari admin lama, gambar lewat pemilih file dengan alt dan sumber teroptimasi
-      lewat `/img`) dan pemilih relasi/file di form. Belum dicoba di browser.
+      lewat `/img`) dan pemilih relasi/file di form.
 
 ## 3. Kontrak plugin
 
@@ -144,8 +146,7 @@ Dikerjakan satu komponen per langkah; urutan di atas tidak bergantung padanya.
       `Calendar` (react-day-picker), `DatePicker`, `Skeleton`, `Dialog`, `ConfirmDialog` (AlertDialog Base UI, versi sempit dari
       `Dialog`, dengan animasi), `Badge`, `Checkbox`, `MultiSelect`, dan varian `danger-ghost` pada `Button`. Halaman `/components` di admin untuk melihatnya.
 - [x] Item menu aktif di sidebar memakai warna `primary` (bukan abu-abu) supaya jelas terlihat.
-- [ ] Belum dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, `ConfirmDialog`, popover menu user,
-      mode gelap kit.
+- [x] Sudah dicoba di browser: klik, popup `Select`/`DatePicker`, navigasi bulan, `ConfirmDialog`, popover menu user, mode gelap kit.
 - [x] **`RenderForm`** (semua tipe: text, email, numeric, boolean, select, datepicker, object, array, relation,
       multi_relation, file, multi_file, richtext; `react-hook-form` dan `react-number-format`) dan **`RichTextEditor`** (TipTap).
       Kit bertambah: `NumberInput`, `Combobox`, `MultiCombobox`, `RelationInput`, `FileInput`, `RichTextEditor`. Relation
@@ -168,10 +169,10 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
 - [x] Schema dimuat setelah sesi diperiksa: `Shell` baru dirender setelah `Protected` memasang header `Authorization`.
 - [x] Login sudah dicoba di browser. Setup sampai dashboard belum.
 - [x] Logout: menu user di sidebar, dengan `ConfirmDialog`. Memanggil `logout`, menghapus cookie, header, dan cache
-      `["schema"]`/`["model"]` (cache per sesi harus dibersihkan di sini juga bila bertambah). Belum dicoba di browser.
+      `["schema"]`/`["model"]` (cache per sesi harus dibersihkan di sini juga bila bertambah).
 - [x] 401 di tengah sesi: `Protected` memasang interseptor (`watchExpiry`, `lib/session.ts`) pada client; 401 untuk request yang
       membawa token yang sedang dipakai membersihkan cache sesi (`clearSession`), menghapus cookie, dan router mengarahkan ke
-      `/login` dengan pesan "Your session has ended" (state router `expired`, juga untuk token yang ditolak `check-token`). 401 tanpa token (salah password) atau untuk token yang sudah diganti diabaikan. Belum dicoba di browser.
+      `/login` dengan pesan "Your session has ended" (state router `expired`, juga untuk token yang ditolak `check-token`). 401 tanpa token (salah password) atau untuk token yang sudah diganti diabaikan.
 - [ ] Cookie `HttpOnly` dari server: login mengirim `Set-Cookie`, server membaca cookie, ada perlindungan CSRF. Pekerjaan
       di core. Cookie sekarang ditulis script (server mengirim token di JSON), jadi bisa dibaca script lain di halaman,
       sama seperti localStorage.
