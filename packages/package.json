@@ -1,6 +1,6 @@
 {
   "name": "@njinlabs/njin-admin",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "description": "What a plugin for the njin admin panel imports.",
   "type": "module",
   "license": "MIT",
