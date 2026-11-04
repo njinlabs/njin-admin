@@ -7,9 +7,10 @@ import {
   PopoverTrigger,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
-import { PiSignOut } from "react-icons/pi";
+import { PiPlugsConnected, PiSignOut } from "react-icons/pi";
 import { client } from "../lib/client";
 import { clearSession } from "../lib/session";
 
@@ -48,6 +49,16 @@ export const UserMenu = ({ user }: { user: Row }) => {
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-56 p-1">
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            render={
+              <Link to="/connections" onClick={() => setMenuOpen(false)} />
+            }
+          >
+            <PiPlugsConnected />
+            Connected apps
+          </Button>
           <Button
             variant="danger-ghost"
             className="w-full justify-start"

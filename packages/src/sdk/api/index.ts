@@ -5,6 +5,7 @@ export * from "./auth";
 export * from "./file";
 export * from "./grants";
 export * from "./model";
+export * from "./oauth";
 export * from "./permissions";
 export * from "./setup";
 export * from "./vars";

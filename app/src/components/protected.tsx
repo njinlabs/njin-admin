@@ -5,7 +5,7 @@ import {
 } from "@njinlabs/njin-admin/sdk";
 import { Button } from "@njinlabs/njin-admin/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Navigate } from "@tanstack/react-router";
+import { Navigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { client } from "../lib/client";
@@ -14,10 +14,15 @@ import { Shell } from "./shell";
 
 // The pages behind the login. The token is checked with the server before anything is shown; a
 // token it refuses is dropped, which sends the user back to the login page.
-export const Protected = () => {
+// `bare` is for a page that needs the session but not the sidebar (authorizing an app).
+export const Protected = ({ bare }: { bare?: boolean }) => {
   const [cookies, , removeCookie] = useCookies(["token"]);
   const token: string | undefined = cookies.token;
   const queryClient = useQueryClient();
+  // Where the login page brings the user back to: the page they were on, not always the dashboard.
+  const here = useLocation({
+    select: ({ href }) => (href === "/" ? undefined : href),
+  });
   // Told to the login page, so someone sent there by a session that ended knows why.
   const [expired, setExpired] = useState(false);
 
@@ -64,6 +69,7 @@ export const Protected = () => {
     return (
       <Navigate
         to="/login"
+        search={here ? ({ redirect: here } as never) : undefined}
         state={expired ? ({ expired: true } as never) : undefined}
       />
     );
@@ -85,7 +91,9 @@ export const Protected = () => {
 
   return (
     <SessionContext value={{ user, permissions: permissions.data, client }}>
-      <Shell user={user} />
+      {bare ? <Outlet /> : <Shell user={user} />}
     </SessionContext>
   );
 };
+
+export const ProtectedBare = () => <Protected bare />;

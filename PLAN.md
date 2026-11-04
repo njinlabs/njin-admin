@@ -193,6 +193,12 @@ Sisi server (`/api/auth/login`, `check-token`, `logout`, `/api/setup`) dikerjaka
 - [x] Hook izin untuk plugin: `useSession`, `useClient`, `useCan`, `useCanOn` di `sdk/session.tsx` (konteks dipasang
       `Protected`, sdk dibagi ke plugin). `requires` pada menu, halaman, dan widget mengikutinya.
 
+- [x] **OAuth di admin** (sisi admin): `/oauth/authorize` (`pages/authorize.tsx`, tanpa sidebar lewat `ProtectedBare`) memakai sesi admin,
+      jadi tidak ada login kedua; pengguna memilih scope (`describeScope`, `groupScopes`), lalu Allow/Deny dan admin
+      mengalihkan ke `redirect` dari server. Login membawa `?redirect=` supaya kembali ke halaman semula (bukan selalu `/`).
+      `/connections` (`pages/connections.tsx`, dari menu user): daftar app terhubung, persempit akses, putuskan, memakai
+      `/api/oauth/consents` yang sudah ada. SDK di `sdk/api/oauth.ts`.
+
 ## 6. Integrasi di core njin
 
 Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum menyentuh bagian yang sama.
@@ -206,6 +212,16 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 - [x] Layani `/_admin/plugins/*` (pakai `resolveSafePath`).
 - [x] `njin build`/`njin dev` membuild plugin lokal dengan `adminPluginConfig`
       (`vite` sebagai peer/optional dependency, hanya wajib bila `admin.plugins` terisi).
+- [ ] **OAuth: halaman HTML di core diganti halaman admin** (`src/modules/oauth.ts`, `core/http/html_page.ts`). Ditunda: pemilik repo
+      yang akan mengerjakannya nanti; halaman authorize di admin belum jalan end-to-end sampai ini selesai. Admin sudah siap
+      (bagian 5); core perlu, dengan sesi biasa (`Authorization: Bearer`, bukan cookie `njin_web`):
+      - `GET /api/oauth/authorize?<query client>` -> `{ data: { client: { id, name }, host, scopes, redirect? } }`: sama dengan
+        `resolveAuthorize` + `grantable`; `redirect` bila consent lama sudah mencakup (tanpa `prompt=consent`); 400 `{ message }`
+        untuk client atau redirect_uri yang tidak dikenal (tidak pernah dialihkan).
+      - `POST /api/oauth/authorize` body `{ ...query client, action: "approve" | "deny", grant: string[] }` ->
+        `{ data: { redirect } }` (kode, atau `access_denied`, plus `state` dan `iss`). Sesi cukup sebagai pengaman CSRF.
+      - `authorization_endpoint` di metadata menunjuk ke `/_admin/oauth/authorize`; login/logout HTML, `consentPage`,
+        cookie `njin_web` dan token `web` dihapus. Core ini milik kolega: belum disentuh dari repo admin.
 - [x] Tes di core untuk semuanya.
 - [x] Distribusi admin: aset rilis GitHub dan `adminVersion`, menggantikan `template/_admin` yang sudah usang.
 - [x] Catat perubahan breaking `GET /api/schema` (`data` jadi `models`) di CHANGELOG bila ada.

@@ -7,8 +7,9 @@ import {
   type RouterHistory,
 } from "@tanstack/react-router";
 import type { FC } from "react";
-import { Protected } from "../components/protected";
+import { Protected, ProtectedBare } from "../components/protected";
 import { Root } from "../components/root";
+import { AuthorizePage } from "../pages/authorize";
 import { LoginPage } from "../pages/login";
 import { SetupPage } from "../pages/setup";
 import { NoAccess } from "../pages/users/shared";
@@ -35,6 +36,7 @@ type Options = {
   // the two layers that ask the server something.
   root?: FC;
   layout?: FC;
+  bare?: FC;
   history?: RouterHistory;
 };
 
@@ -46,6 +48,7 @@ export const createAdminRouter = ({
   queryClient,
   root: rootComponent = Root,
   layout = Protected,
+  bare = ProtectedBare,
   history,
 }: Options) => {
   const root = createRootRouteWithContext<RouterContext>()({
@@ -58,6 +61,19 @@ export const createAdminRouter = ({
     getParentRoute: () => root,
     id: "shell",
     component: layout,
+  });
+
+  // Needs the session like the shell does, but draws no sidebar around it.
+  const alone = createRoute({
+    getParentRoute: () => root,
+    id: "alone",
+    component: bare,
+  });
+
+  const authorize = createRoute({
+    getParentRoute: () => alone,
+    path: "/oauth/authorize",
+    component: AuthorizePage,
   });
 
   const login = createRoute({
@@ -81,7 +97,12 @@ export const createAdminRouter = ({
   );
 
   return createRouter({
-    routeTree: root.addChildren([setup, login, shell.addChildren(children)]),
+    routeTree: root.addChildren([
+      setup,
+      login,
+      alone.addChildren([authorize]),
+      shell.addChildren(children),
+    ]),
     basepath: "/_admin",
     context: { queryClient },
     defaultNotFoundComponent: () => <p>Not found</p>,

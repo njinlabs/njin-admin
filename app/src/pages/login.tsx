@@ -8,7 +8,7 @@ import {
   Input,
 } from "@njinlabs/njin-admin/ui";
 import { useMutation } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { Controller, useForm } from "react-hook-form";
@@ -22,8 +22,17 @@ const schema = z.object({
   password: z.string().min(1, "Required"),
 });
 
+// Only a page of this admin: the address comes from the query string, so anything else is ignored.
+export const safeRedirect = (value: unknown) =>
+  typeof value === "string" && /^\/(?![/\\])/.test(value) ? value : undefined;
+
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const router = useRouter();
+  const redirect = useLocation({
+    select: (location) =>
+      safeRedirect((location.search as { redirect?: unknown }).redirect),
+  });
   const [cookies, setCookie] = useCookies(["token"]);
   // Sent here by a session that ended, not by someone arriving signed out.
   const expired = useLocation({
@@ -43,8 +52,11 @@ export const LoginPage = () => {
   });
 
   useEffect(() => {
-    if (cookies.token) navigate({ to: "/" });
-  }, [cookies.token, navigate]);
+    if (!cookies.token) return;
+    // The address is the router's own, without the base path the browser needs.
+    if (redirect) router.history.push(`${router.basepath}${redirect}`);
+    else navigate({ to: "/" });
+  }, [cookies.token, navigate, router, redirect]);
 
   const error = signIn.error && toApiError(signIn.error);
   // The server says only "Unauthorized" for a wrong email or password.

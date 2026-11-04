@@ -136,6 +136,11 @@ The admin side, in `app/src`:
   parse grants in the admin. The server still decides (403, or 404 for someone else's row). Clear `["permissions"]` on
   sign out with the rest. Every new page and button follows it. The server gates Publish, Unpublish and Discard on `publish`, so the form shows all three only with it. A relation is searched only
   on a model the user may read, and files are picked only with `file` read (`lib/related.ts`).
+- OAuth for apps (MCP clients) is the admin's: `/oauth/authorize` (`pages/authorize.tsx`, under `ProtectedBare`: session, no
+  sidebar) and `/connections` (`pages/connections.tsx`). Both use the admin session; nothing is kept apart for them. The
+  authorize endpoints (`getAuthorization`, `decideAuthorization` in `sdk/api/oauth.ts`) are the contract core still has to
+  serve (`PLAN.md`, section 6); the query string goes through untouched and the server validates it. `Protected` sends a
+  signed-out visitor to `/login?redirect=<page>` and `LoginPage` returns there (only to a path of the admin).
 - Pages before a session (login, setup) share `components/auth-layout.tsx` and `password-input.tsx`.
 - Do not store the token in `localStorage`, and do not reload the page to move between login and the admin: navigate
   with the router.

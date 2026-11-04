@@ -18,6 +18,7 @@ import {
   PiUsersDuotone,
 } from "react-icons/pi";
 import { ComponentsPage } from "../pages/components";
+import { ConnectionsPage } from "../pages/connections";
 import { ContentFormPage } from "../pages/content-form";
 import { ContentListPage } from "../pages/content-list";
 import { DashboardPage } from "../pages/dashboard";
@@ -74,6 +75,7 @@ export const routes = {
     { path: "/users/groups", component: GroupsListPage },
     { path: "/users/groups/new", component: GroupFormPage },
     { path: "/users/groups/$id/edit", component: GroupFormPage },
+    { path: "/connections", component: ConnectionsPage },
     { path: "/content/$prefix", component: ContentListPage },
     { path: "/content/$prefix/new", component: ContentFormPage },
     { path: "/content/$prefix/$id/edit", component: ContentFormPage },
