@@ -1,7 +1,7 @@
 # njin-admin
 
 The admin panel for [njin](https://github.com/njinlabs/njin) ("core" below). A site adds its own pages, menus, dashboard
-widgets and form inputs as plugins, without forking the admin. `README.md` covers setup and writing a plugin.
+widgets and form inputs as plugins, without forking the admin. `README.md` is a short introduction; the documentation, including writing a plugin, is the separate docs site (njin.run/docs).
 
 ## Layout
 

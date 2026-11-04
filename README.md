@@ -1,78 +1,55 @@
-# njin-admin
+<p align="center">
+  <a href="https://njin.run">
+    <img src="https://raw.githubusercontent.com/njinlabs/njin-admin/main/assets/logo.svg" alt="njin" width="280">
+  </a>
+</p>
 
-The admin panel for njin, built so a site can add its own pages and menus as plugins.
+<p align="center">
+  <a href="https://github.com/njinlabs/njin-admin/actions/workflows/ci.yml"><img src="https://github.com/njinlabs/njin-admin/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/njinlabs/njin-admin/actions/workflows/codeql.yml"><img src="https://github.com/njinlabs/njin-admin/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+  <a href="https://www.npmjs.com/package/@njinlabs/njin-admin"><img src="https://img.shields.io/npm/v/%40njinlabs%2Fnjin-admin.svg" alt="npm version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+</p>
 
-| Folder | What it is |
-| --- | --- |
-| `app/` | The admin itself (Vite + React). It loads plugins at runtime. |
-| `packages/` | `@njinlabs/njin-admin`: what a plugin imports (`/sdk`), the Vite preset that builds one (`/vite`), the shared-module list (`/shared`), the component kit (`/ui`) and the CSS tokens (`/theme.css`, `/plugin.css`). |
+## About njin admin
 
-## Setup
+njin admin is the admin panel for [njin](https://github.com/njinlabs/njin). It gives your team a clean place to manage a site, and it lets you add your own pages, menus and dashboard widgets as plugins instead of forking the panel.
 
-```bash
-bun install
-```
+- **Content, without the setup.** Lists, forms, drafts, publishing and multiple languages follow the models you define in njin.
+- **Files and users.** A file manager, and groups with permissions that decide what each person sees and can do.
+- **A dashboard you build.** Every user picks the tiles they want.
+- **Connected apps.** Approve AI agents and other apps that act on your behalf, and take their access back at any time.
+- **Extensible.** Plugins add pages, menus, widgets and custom form inputs, and look like part of the panel.
+- **Light and dark.** Follows your system.
 
-## Develop
+## Getting Started
 
-```bash
-bun run dev   # http://localhost:5173/_admin/
-```
-
-`/api`, `/img` and `/uploads` are forwarded to the njin server (`VITE_API_URL`, default
-`http://localhost:3000`).
-
-Plugins are listed by the njin server at `GET /api/admin/manifest`. A server without admin plugins lists none, and the
-admin starts without them.
-
-### Playground (optional, local)
-
-`playground/` is gitignored, as in njin core: a scratch place for example plugins. It is not a workspace; it
-has its own `package.json` and installs the library with a link:
+You do not need to install njin admin by hand. A new njin project already includes it:
 
 ```bash
-(cd packages && bun link)                                        # once
-cd playground/reports && bun install                             # depends on "@njinlabs/njin-admin": "link:@njinlabs/njin-admin"
-bun run build
+bunx @njinlabs/njin create my-web
 ```
 
-## Check
+To add it to an existing project, or to update it:
 
 ```bash
-bun test            # unit and feature tests
-bun run typecheck   # every workspace
-bun run lint        # biome (lint:fix and format to apply)
+bunx njin update --admin
 ```
 
-## How a plugin works
+Then open `/_admin` on your site.
 
-A plugin is one file that default-exports `defineAdminPlugin({ name, navs, routes, widgets, fields })`. It is built to a
-single ES module without React, TanStack Query or TanStack Router: the admin hands its own copies to
-the plugin at runtime, so there is one React for the whole page. Styles are built to a separate CSS
-file that reads the admin's design tokens as CSS variables instead of copying them.
+## Documentation
 
-What it can add:
+The documentation, including how to write a plugin, lives at **[njin.run/docs](https://njin.run/docs)**.
 
-- `navs`: menu entries (section "Plugins"), with `order` and `requires`.
-- `routes`: pages, with `requires`.
-- `widgets`: tiles a user can add to their dashboard (`id`, `title`, `size`, `order`, `requires`). The dashboard starts
-  empty; each user picks from the widgets they may see (the admin's own and the plugins'), so a widget is listed
-  only to people who pass its `requires`.
-- `fields`: input renderers for fields the server tagged with `plugin(text(), ["<name>:<renderer>", options])`.
-  `fields: { slugify: ({ value, onChange, options, values, locale }) => ... }` is used for `"reports:slugify"`. With
-  languages, `locale` is the one being edited and `value` and `values` are already that language's text, not the map.
+## Contributing
 
-### Contract version
+Thank you for considering contributing to njin admin! Please read the [contribution guide](CONTRIBUTING.md) first.
 
-The build writes `contract.json` (`{ "version": 1 }`) beside `index.js`; the manifest entry carries it as `contract`.
-The admin loads only a plugin built for its own contract and logs why it skipped any other (a plugin that declares
-none is skipped too). The version goes up on a breaking change to the sdk, the kit or the shared modules, and a new
-major of React, react-dom, TanStack Query or Router counts as one.
+## Security Vulnerabilities
 
-A plugin can raise a toast from anywhere with `toast.success/error/info(title, description?)` from `@njinlabs/njin-admin/ui`;
-the admin mounts the one `Toaster`.
+If you discover a security vulnerability in njin admin, please follow the steps in our [security policy](SECURITY.md). Please do not open a public issue.
 
-`requires: { resource, action }` names a resource of the server's access catalog (models, `vars.<prefix>`,
-`file`, `user`, `access_group`, `analytics`, and the `permissions` the server plugin declares). Inside a
-plugin, `useSession`, `useClient`, `useCan` and `useCanOn` from the sdk read who is signed in and what they may do.
-The plugin is registered on the server with `definePlugin({ admin: [import.meta.resolve("./admin/index.tsx")], permissions: [...] })`.
+## License
+
+njin admin is open-source software licensed under the [MIT license](LICENSE).
