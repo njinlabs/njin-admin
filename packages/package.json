@@ -1,9 +1,19 @@
 {
   "name": "@njinlabs/njin-admin",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.1",
   "description": "What a plugin for the njin admin panel imports.",
   "type": "module",
   "license": "MIT",
+  "homepage": "https://github.com/njinlabs/njin-admin#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/njinlabs/njin-admin.git",
+    "directory": "packages"
+  },
+  "bugs": "https://github.com/njinlabs/njin-admin/issues",
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": [
     "*.css"
   ],

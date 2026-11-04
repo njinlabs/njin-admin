@@ -215,7 +215,10 @@ Pekerjaan di repo `njin`. Auth di core sudah masuk; tanyakan kolega dulu sebelum
 - [x] `.gitattributes` (`* text=auto eol=lf`).
 - [x] CI: biome, typecheck, tes, dan build admin (`.github/workflows/ci.yml`), lulus di `main`.
 - [x] `LICENSE` (MIT, sama dengan core).
-- [ ] Rilis `@njinlabs/njin-admin` ke npm (alur seperti njin: GitHub Release lalu npm, dist-tag beta dulu).
+- [x] Alur rilis otomatis (`.github/workflows/release.yml`, GitHub Release `published`): cek (biome, typecheck, tes, tag sama
+      dengan `packages/package.json`), lalu publish `@njinlabs/njin-admin` ke npm (provenance, prerelease di dist-tag sendiri)
+      dan build `app/` jadi `njin-admin-<tag>.tar.gz` (isi `dist/` langsung, plus `.sha256`) yang dilampirkan ke rilis.
+      CodeQL di `codeql.yml`. Belum dicoba sungguhan: butuh secret `NPM_TOKEN` dan rilis pertama.
 - [ ] Dokumentasi untuk penulis plugin (cara membuat, membuild, CSS, API yang tersedia).
 - [x] Remote git dan push (`github.com/njinlabs/njin-admin`).
 

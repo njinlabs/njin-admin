@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify tag matches packages/package.json version
+        run: |
+          PKG_VERSION="v$(bun -p "require('./packages/package.json').version")"
+          if [ "$PKG_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Release tag ($GITHUB_REF_NAME) does not match packages/package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Lint & format (Biome)
+        run: bunx biome ci .
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test
+
+  npm:
+    name: Publish @njinlabs/njin-admin to npm
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (for npm publish)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish
+        working-directory: packages
+        run: |
+          cp ../LICENSE ../README.md .
+          VERSION="$(node -p "require('./package.json').version")"
+          # A prerelease (e.g. 0.1.0-beta.1) goes under its own dist-tag (beta) so it never
+          # takes over `latest`.
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE="${VERSION#*-}"
+            npm publish --access public --provenance --tag "${PRERELEASE%%.*}"
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  admin:
+    name: Build the admin and attach it to the release
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bunx --bun vite build
+        working-directory: app
+
+      # The tarball holds the contents of the build (index.html, assets/), so whatever installs
+      # it extracts straight into _admin/.
+      - name: Package
+        run: |
+          ASSET="njin-admin-${GITHUB_REF_NAME}.tar.gz"
+          tar -czf "$ASSET" -C app/dist .
+          sha256sum "$ASSET" > "$ASSET.sha256"
+
+      - name: Upload to the release
+        run: gh release upload "$GITHUB_REF_NAME" njin-admin-*.tar.gz njin-admin-*.tar.gz.sha256 --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
