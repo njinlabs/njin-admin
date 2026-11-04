@@ -93,11 +93,12 @@ jobs:
         working-directory: app
 
       # The tarball holds the contents of the build (index.html, assets/), so whatever installs
-      # it extracts straight into _admin/.
+      # it extracts straight into _admin/. The names are listed instead of "." so no entry starts
+      # with "./".
       - name: Package
         run: |
           ASSET="njin-admin-${GITHUB_REF_NAME}.tar.gz"
-          tar -czf "$ASSET" -C app/dist .
+          tar -czf "$ASSET" -C app/dist $(ls -A app/dist)
           sha256sum "$ASSET" > "$ASSET.sha256"
 
       - name: Upload to the release
