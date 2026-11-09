@@ -4,7 +4,6 @@ import {
   describeScope,
   everything,
   groupScopes,
-  type Permissions,
   revokeConnectionMutation,
   toApiError,
   updateConnectionMutation,
@@ -24,15 +23,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { PageTitle } from "../components/header-slot";
 import { client } from "../lib/client";
+import { grantable } from "../lib/grantable";
 import { LoadError } from "./users/shared";
-
-// What the user could hand out themselves: the choices when an app holding "everything" is narrowed.
-const grantable = (permissions: Permissions) =>
-  permissions.flatMap(({ resource, actions }) =>
-    Object.entries(actions)
-      .filter(([, level]) => level === "all" || level === "own")
-      .map(([action]) => `${resource}:${action}`),
-  );
 
 const when = (value: string | null) =>
   value ? new Date(value).toLocaleString() : "never";

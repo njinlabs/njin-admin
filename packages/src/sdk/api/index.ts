@@ -12,6 +12,7 @@ export * from "./model";
 export * from "./oauth";
 export * from "./permissions";
 export * from "./setup";
+export * from "./token";
 export * from "./vars";
 
 // The one axios instance for talking to the njin server. Same origin by default (the admin is

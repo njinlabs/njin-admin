@@ -87,6 +87,9 @@ extensionless TypeScript imports of the workspace, so Vite configs run under Bun
 - OAuth for apps (MCP clients) is the admin's: `/oauth/authorize` (no sidebar, `ProtectedBare`) and `/connections`.
   Both use the admin session and core's `/api/oauth/*` JSON endpoints; the authorize query string goes through untouched
   and core validates it. Core serves no sign-in or consent page of its own.
+- Personal access tokens are `/tokens` (`pages/tokens.tsx`, `sdk/api/token.ts`, core's `/api/token`, session only). The
+  bearer comes back once on create and is shown in a dialog, never kept. The query key is `["tokens"]`: `["token"]` is the
+  session check, which `clearSession` keeps. Scope choices come from `useSession().permissions` (`lib/grantable.ts`).
 
 ## One schema
 

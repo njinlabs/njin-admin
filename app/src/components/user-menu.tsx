@@ -9,7 +9,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { PiPlugsConnected, PiSignOut } from "react-icons/pi";
+import { PiKey, PiPlugsConnected, PiSignOut } from "react-icons/pi";
 import { client } from "../lib/client";
 import { endSession } from "../lib/session";
 
@@ -55,6 +55,14 @@ export const UserMenu = ({ user }: { user: Row }) => {
           >
             <PiPlugsConnected />
             Connected apps
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            render={<Link to="/tokens" onClick={() => setMenuOpen(false)} />}
+          >
+            <PiKey />
+            Personal tokens
           </Button>
           <Button
             variant="danger-ghost"
